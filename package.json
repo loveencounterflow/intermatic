@@ -1,0 +1,25 @@
+{
+  "name": "intermatic",
+  "version": "0.0.1",
+  "description": "state machine for NodeJS and the browser",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"see https://github.com/loveencounterflow/hengist/dev/intermatic\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/loveencounterflow/intermatic.git"
+  },
+  "keywords": [
+    "fsa",
+    "fsm",
+    "statemachine",
+    "finite-state-automaton"
+  ],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/loveencounterflow/intermatic/issues"
+  },
+  "homepage": "https://github.com/loveencounterflow/intermatic#readme"
+}
