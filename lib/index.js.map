@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "file": "",
+  "sourceRoot": "",
+  "sources": [
+    "../src/index.coffee"
+  ],
+  "names": [],
+  "mappings": "AAAA;EAAA;EAEG,CAAA,CAAA,CAAA,GAAA;AACH,QAAA;IAAE,CAAA,CAAE,UAAF,CAAA,GAAkB,OAAA,CAAQ,WAAR,CAAlB;IACA,IAAG,yBAAH;MACE,UAAU,CAAC,UAAX,GAAwB,WAD1B;KAAA,MAAA;MAGE,IAAC,CAAA,UAAD,GAAc,WAHhB;;AAIA,WAAO;EANN,CAAA;AAFH",
+  "sourcesContent": [
+    "'use strict'\n\ndo =>\n  { Intermatic, } = require './main.js'\n  if globalThis.window?\n    globalThis.Intermatic = Intermatic\n  else\n    @Intermatic = Intermatic\n  return null\n\n"
+  ]
+}
