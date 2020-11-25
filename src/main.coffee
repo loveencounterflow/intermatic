@@ -66,6 +66,7 @@ class Intermatic
     @_compile_triggers()
     @_compile_transitioners()
     @_compile_handlers()
+    @_compile_goto()
 
   #---------------------------------------------------------------------------------------------------------
   fail: ( trigger ) ->
@@ -98,36 +99,43 @@ class Intermatic
     return null
 
   #---------------------------------------------------------------------------------------------------------
-  _compile_transitioners: ->
+  _get_transitioner: ( tname, from_and_to_states = null ) ->
+    ### TAINT too much logic to be done at in run time, try to precompile more ###
     $key = '^trigger'
+    return transitioner = ( P... ) =>
+      ### TAINT use single transitioner method for all triggers? ###
+      from_sname  = @state
+      #-------------------------------------------------------------------------------------------------
+      if from_and_to_states?
+        unless ( to_sname = from_and_to_states[ @state ] )?
+          trigger = freeze { $key, failed: true, from: from_sname, via: tname, }
+          return @fsmd.fail trigger if @fsmd.fail?
+          return @fail trigger
+      else
+        [ to_sname, P..., ] = P
+      #-------------------------------------------------------------------------------------------------
+      changed     = to_sname isnt from_sname
+      trigger     = freeze { $key, from: from_sname, via: tname, to: to_sname, changed, }
+      ### TAINT add extra arguments P ###
+      @before.trigger?          trigger
+      @before.change?           trigger if changed
+      @before[  tname       ]?  trigger
+      @leave[   from_sname  ]?  trigger if changed
+      @state      = to_sname if changed
+      @stay[    to_sname    ]?  trigger if not changed
+      @enter[   to_sname    ]?  trigger if changed
+      @after[   tname       ]?  trigger
+      @after.change?            trigger if changed
+      @after.trigger?           trigger
+      return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _compile_transitioners: ->
     for tname, from_and_to_states of @triggers
       do ( tname, from_and_to_states ) =>
         if @[ tname ]?
           throw new Error "^interstate/_compile_triggers@516^ transitioner #{rpr tname} already defined"
-        transitioner = ( P... ) =>
-          ### TAINT use single transitioner method for all triggers? ###
-          from_sname  = @state
-          #-------------------------------------------------------------------------------------------------
-          unless ( to_sname = from_and_to_states[ @state ] )?
-            trigger = freeze { $key, failed: true, from: from_sname, via: tname, }
-            return @fsmd.fail trigger if @fsmd.fail?
-            return @fail trigger
-          #-------------------------------------------------------------------------------------------------
-          ### TAINT rename `trigger` (object w/ data representing the current trajectory) ###
-          changed     = to_sname isnt from_sname
-          trigger     = freeze { $key, from: from_sname, via: tname, to: to_sname, changed, }
-          @before.trigger?          trigger
-          @before.change?           trigger if changed
-          @before[  tname       ]?  trigger
-          @leave[   from_sname  ]?  trigger if changed
-          @state      = to_sname if changed
-          @stay[    to_sname    ]?  trigger if not changed
-          @enter[   to_sname    ]?  trigger if changed
-          @after[   tname       ]?  trigger
-          @after.change?            trigger if changed
-          @after.trigger?           trigger
-          return null
-        @[ tname ] = transitioner
+        @[ tname ] = @_get_transitioner tname, from_and_to_states
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -137,6 +145,16 @@ class Intermatic
     for category in [ 'before', 'enter', 'stay', 'leave', 'after', ]
       for name, handler of @fsmd[ category ] ? {}
         @[ category ][ name ] = handler.bind @
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _compile_goto: ->
+    if ( goto = @fsmd.goto )?
+      unless goto is '*'
+        throw new Error "^interstate/_compile_handlers@776^ expected '*' for key `goto`, got #{rpr goto}"
+      transitioner = @_get_transitioner 'goto', null
+      @goto = ( to_sname ) =>
+        transitioner to_sname
     return null
 
 module.exports = { Intermatic, }
