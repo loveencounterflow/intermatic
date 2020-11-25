@@ -101,7 +101,6 @@ class Intermatic
     $key = '^trigger'
     for tname, from_and_to_states of @triggers
       do ( tname, from_and_to_states ) =>
-        debug '^3334^', [ tname, from_and_to_states, ]
         if @[ tname ]?
           throw new Error "^interstate/_compile_triggers@516^ transitioner #{rpr tname} already defined"
         transitioner = ( P... ) =>
