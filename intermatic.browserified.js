@@ -1,16 +1,24 @@
 (function(){function r(e,n,t){function o(i,f){if(!n[i]){if(!e[i]){var c="function"==typeof require&&require;if(!f&&c)return c(i,!0);if(u)return u(i,!0);var a=new Error("Cannot find module '"+i+"'");throw a.code="MODULE_NOT_FOUND",a}var p=n[i]={exports:{}};e[i][0].call(p.exports,function(r){var n=e[i][1][r];return o(n||r)},p,p.exports,r,e,n,t)}return n[i].exports}for(var u="function"==typeof require&&require,i=0;i<t.length;i++)o(t[i]);return o}return r})()({1:[function(require,module,exports){
-
-'use strict'
-
-require( './lib/main.js' );
-// globalThis.Interstate = Interstate
-
-
-
-},{"./lib/main.js":2}],2:[function(require,module,exports){
 (function() {
   'use strict';
-  var Intermatic, freeze;
+  (() => {
+    var Intermatic;
+    ({Intermatic} = require('./main.js'));
+    if (globalThis.window != null) {
+      globalThis.Intermatic = Intermatic;
+    } else {
+      this.Intermatic = Intermatic;
+    }
+    return null;
+  })();
+
+}).call(this);
+
+
+},{"./main.js":2}],2:[function(require,module,exports){
+(function() {
+  'use strict';
+  var Intermatic, debug, freeze, rpr;
 
   // ############################################################################################################
   // CND                       = require 'cnd'
@@ -37,24 +45,31 @@ require( './lib/main.js' );
   //   StateMachine              = require 'javascript-state-machine'
   // Mutimix                   = require 'multimix'
 
-    // #-----------------------------------------------------------------------------------------------------------
+  // #-----------------------------------------------------------------------------------------------------------
   // warn = ( message ) ->
   //   if µ?.DOM?.warn?        then µ.DOM.warn message
   //   else if console?.warn?  then console.warn message
   //   else throw new Error message
   //   return null
 
-    // #===========================================================================================================
+  // #===========================================================================================================
   // class Fsm extends Multimix
   //   constructor: ( fsmd ) ->
   //     # validate.fsmd fsmd
 
-    // #===========================================================================================================
+  // #===========================================================================================================
   // class Compund_fsm extends Multimix
   //   constructor: ( fsmds ) ->
   //     # validate.fsmds fsmds
+  if (globalThis.debug == null) {
+    debug = console.debug;
+  }
 
-    //===========================================================================================================
+  if (globalThis.rpr == null) {
+    rpr = JSON.stringify;
+  }
+
+  //===========================================================================================================
   Intermatic = class Intermatic {
     //---------------------------------------------------------------------------------------------------------
     constructor(fsmd) {
@@ -124,7 +139,6 @@ require( './lib/main.js' );
         from_and_to_states = ref[tname];
         ((tname, from_and_to_states) => {
           var transitioner;
-          debug('^3334^', [tname, from_and_to_states]);
           if (this[tname] != null) {
             throw new Error(`^interstate/_compile_triggers@516^ transitioner ${rpr(tname)} already defined`);
           }
@@ -222,11 +236,10 @@ require( './lib/main.js' );
 
   };
 
-  if (globalThis.require != null) {
-    module.exports = {Intermatic};
-  } else {
-    globalThis.Intermatic = Intermatic;
-  }
+  module.exports = {Intermatic};
+
+  // if globalThis.require? then module.exports        = { Intermatic, }
+// else                        globalThis.Intermatic = Intermatic
 
 }).call(this);
 
