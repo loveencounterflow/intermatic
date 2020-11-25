@@ -43,7 +43,8 @@ freeze                    = Object.freeze
 #   constructor: ( fsmds ) ->
 #     # validate.fsmds fsmds
 
-
+unless globalThis.debug?  then debug  = console.debug
+unless globalThis.rpr?    then rpr    = JSON.stringify
 
 #===========================================================================================================
 class Intermatic
