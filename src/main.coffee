@@ -139,6 +139,9 @@ class Interstate
         @[ category ][ name ] = handler.bind @
     return null
 
+module.exports = { Intermatic, }
+# if globalThis.require? then module.exports        = { Intermatic, }
+# else                        globalThis.Intermatic = Intermatic
 
-globalThis.Interstate = Interstate
+
 
