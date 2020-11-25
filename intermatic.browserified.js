@@ -3,11 +3,11 @@
   'use strict';
   (() => {
     var Intermatic;
-    ({Intermatic} = require('./main.js'));
+    Intermatic = require('./main.js');
     if (globalThis.window != null) {
       globalThis.Intermatic = Intermatic;
     } else {
-      this.Intermatic = Intermatic;
+      module.exports = Intermatic;
     }
     return null;
   })();
@@ -18,7 +18,7 @@
 },{"./main.js":2}],2:[function(require,module,exports){
 (function() {
   'use strict';
-  var Intermatic, debug, freeze, rpr;
+  var Fsm, Intermatic, debug, freeze, rpr;
 
   // ############################################################################################################
   // CND                       = require 'cnd'
@@ -70,7 +70,7 @@
   }
 
   //===========================================================================================================
-  Intermatic = class Intermatic {
+  Fsm = class Fsm {
     //---------------------------------------------------------------------------------------------------------
     constructor(fsmd) {
       // validate.fsmd fsmd
@@ -260,7 +260,18 @@
 
   };
 
-  module.exports = {Intermatic};
+  Intermatic = (function() {
+    //===========================================================================================================
+    class Intermatic {};
+
+    Intermatic.Fsm = Fsm;
+
+    return Intermatic;
+
+  }).call(this);
+
+  //###########################################################################################################
+  module.exports = Intermatic;
 
   // if globalThis.require? then module.exports        = { Intermatic, }
 // else                        globalThis.Intermatic = Intermatic
