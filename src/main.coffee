@@ -47,7 +47,7 @@ unless globalThis.debug?  then debug  = console.debug
 unless globalThis.rpr?    then rpr    = JSON.stringify
 
 #===========================================================================================================
-class Intermatic
+class Fsm
 
   #---------------------------------------------------------------------------------------------------------
   constructor: ( fsmd ) ->
@@ -157,7 +157,13 @@ class Intermatic
         transitioner to_sname
     return null
 
-module.exports = { Intermatic, }
+#===========================================================================================================
+class Intermatic
+  @Fsm = Fsm
+
+
+############################################################################################################
+module.exports = Intermatic
 # if globalThis.require? then module.exports        = { Intermatic, }
 # else                        globalThis.Intermatic = Intermatic
 

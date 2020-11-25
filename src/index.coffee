@@ -1,10 +1,10 @@
 'use strict'
 
 do =>
-  { Intermatic, } = require './main.js'
+  Intermatic = require './main.js'
   if globalThis.window?
     globalThis.Intermatic = Intermatic
   else
-    @Intermatic = Intermatic
+    module.exports = Intermatic
   return null
 
