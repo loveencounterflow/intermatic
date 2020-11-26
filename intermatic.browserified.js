@@ -98,6 +98,8 @@
       this.stay = {};
       this.leave = {};
       this.after = {};
+      this.my = {};
+      this.our = null;
       this._compile_triggers();
       this._compile_transitioners();
       this._compile_handlers();
