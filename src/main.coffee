@@ -75,6 +75,8 @@ class Fsm
     @stay         = {}
     @leave        = {}
     @after        = {}
+    @my           = {}
+    @our          = null
     @_compile_triggers()
     @_compile_transitioners()
     @_compile_handlers()
