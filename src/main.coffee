@@ -47,6 +47,18 @@ unless globalThis.debug?  then debug  = console.debug
 unless globalThis.rpr?    then rpr    = JSON.stringify
 
 #===========================================================================================================
+#
+#-----------------------------------------------------------------------------------------------------------
+set = ( target, key, value ) ->
+  if target[ key ]?
+    throw new Error "^interstate/set@776^ name collision: #{rpr key}"
+  target[ key ] = value
+  return value
+
+
+#===========================================================================================================
+#
+#-----------------------------------------------------------------------------------------------------------
 class Fsm
 
   #---------------------------------------------------------------------------------------------------------
@@ -90,11 +102,11 @@ class Fsm
       #.....................................................................................................
       snames.add from_sname
       snames.add to_sname
-      ( @triggers[ tname ] ?= {} )[ from_sname ] = to_sname
+      set ( @triggers[ tname ] ?= {} ), from_sname, to_sname
     #.......................................................................................................
     for starred_name, to_sname of starred
       for from_sname from snames
-        ( @triggers[ starred_name ] ?= {} )[ from_sname ] = to_sname
+        set ( @triggers[ starred_name ] ?= {} ), from_sname, to_sname
     #.......................................................................................................
     return null
 
@@ -153,13 +165,18 @@ class Fsm
       unless goto is '*'
         throw new Error "^interstate/_compile_handlers@776^ expected '*' for key `goto`, got #{rpr goto}"
       transitioner = @_get_transitioner 'goto', null
-      @goto = ( to_sname ) =>
+      set @, 'goto', ( to_sname ) =>
         transitioner to_sname
     return null
 
 #===========================================================================================================
 class Intermatic
   @Fsm = Fsm
+
+  #---------------------------------------------------------------------------------------------------------
+  constructor: ( cfsmd ) ->
+    for fname, fsmd of cfsmd
+      set @, fname, fsm = { name: fname, fsmd..., }
 
 
 ############################################################################################################
