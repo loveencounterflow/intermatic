@@ -18,7 +18,7 @@
 },{"./main.js":2}],2:[function(require,module,exports){
 (function() {
   'use strict';
-  var Fsm, Intermatic, debug, freeze, rpr;
+  var Fsm, Intermatic, debug, freeze, rpr, set;
 
   // ############################################################################################################
   // CND                       = require 'cnd'
@@ -70,6 +70,19 @@
   }
 
   //===========================================================================================================
+
+  //-----------------------------------------------------------------------------------------------------------
+  set = function(target, key, value) {
+    if (target[key] != null) {
+      throw new Error(`^interstate/set@776^ name collision: ${rpr(key)}`);
+    }
+    target[key] = value;
+    return value;
+  };
+
+  //===========================================================================================================
+
+  //-----------------------------------------------------------------------------------------------------------
   Fsm = class Fsm {
     //---------------------------------------------------------------------------------------------------------
     constructor(fsmd) {
@@ -118,13 +131,13 @@
         //.....................................................................................................
         snames.add(from_sname);
         snames.add(to_sname);
-        ((base = this.triggers)[tname] != null ? base[tname] : base[tname] = {})[from_sname] = to_sname;
+        set(((base = this.triggers)[tname] != null ? base[tname] : base[tname] = {}), from_sname, to_sname);
       }
 //.......................................................................................................
       for (starred_name in starred) {
         to_sname = starred[starred_name];
         for (from_sname of snames) {
-          ((base1 = this.triggers)[starred_name] != null ? base1[starred_name] : base1[starred_name] = {})[from_sname] = to_sname;
+          set(((base1 = this.triggers)[starred_name] != null ? base1[starred_name] : base1[starred_name] = {}), from_sname, to_sname);
         }
       }
       //.......................................................................................................
@@ -251,9 +264,9 @@
           throw new Error(`^interstate/_compile_handlers@776^ expected '*' for key \`goto\`, got ${rpr(goto)}`);
         }
         transitioner = this._get_transitioner('goto', null);
-        this.goto = (to_sname) => {
+        set(this, 'goto', (to_sname) => {
           return transitioner(to_sname);
-        };
+        });
       }
       return null;
     }
@@ -262,7 +275,20 @@
 
   Intermatic = (function() {
     //===========================================================================================================
-    class Intermatic {};
+    class Intermatic {
+      //---------------------------------------------------------------------------------------------------------
+      constructor(cfsmd) {
+        var fname, fsm, fsmd;
+        for (fname in cfsmd) {
+          fsmd = cfsmd[fname];
+          set(this, fname, fsm = {
+            name: fname,
+            ...fsmd
+          });
+        }
+      }
+
+    };
 
     Intermatic.Fsm = Fsm;
 
