@@ -147,9 +147,11 @@ class Fsm
   _compile_transitioners: ->
     for tname, from_and_to_states of @triggers
       do ( tname, from_and_to_states ) =>
-        if @[ tname ]?
-          throw new Error "^interstate/_compile_triggers@516^ transitioner #{rpr tname} already defined"
-        @[ tname ] = @_get_transitioner tname, from_and_to_states
+        ### NOTE we *could* allow custom transitioners but that would only replicate behavior available
+        via `fsm.before[ tname ]()`, `fsm.after[ tname ]()`:
+        transitioner = @fsmd[ tname ] ? @_get_transitioner tname, from_and_to_states ###
+        transitioner = @_get_transitioner tname, from_and_to_states
+        set @, tname, transitioner
     return null
 
   #---------------------------------------------------------------------------------------------------------
