@@ -82,19 +82,42 @@ class Intermatic
     @_compile_goto()
 
   #---------------------------------------------------------------------------------------------------------
+  Object.defineProperties @prototype,
+    state:
+      get:            -> @_state
+      set: ( sname  ) ->
+        if typeof sname isnt 'string'
+          throw new Error "^interstate/set/state@501^ state name must be text, got #{rpr sname}"
+        @_state = sname
+
+  #---------------------------------------------------------------------------------------------------------
   fail: ( trigger ) ->
     throw new Error "^interstate/fail@556^ trigger not allowed: #{rpr trigger}"
 
   #---------------------------------------------------------------------------------------------------------
   _compile_triggers: ->
-    starred = {}
-    snames  = new Set [ 'void', ]
+    has_start     = false
+    @starts_with  = null
+    starred       = {}
+    snames        = new Set [ 'void', ]
+    triggers      = [ ( @fsmd.triggers ? [] )..., ]
+    tnames        = new Set ( t[ 1 ] for t in triggers )
     #.......................................................................................................
-    for triplet in @fsmd.triggers ? []
-      ### TAINT validate.list triplet ###
+    unless tnames.has 'start'
+      first_sname = triggers[ 0 ]?[ 2 ] ? 'void'
+      triggers.unshift [ 'void', 'start', first_sname, ]
+    #.......................................................................................................
+    for triplet in triggers
+      ### TAINT validate.list_of.list triplet ###
       ### TAINT validate.tname tname ###
       ### TAINT validate that free of collision ###
       [ from_sname, tname, to_sname, ] = triplet
+      #.....................................................................................................
+      ### TAINT also validate that tuples [ from_sname, tname, ] unique ###
+      if tname is 'start'
+        throw new Error "^interstate/fail@556^ duplica declaration of `start`: #{rpr triplet}" if has_start
+        has_start     = true
+        @starts_with  = to_sname
       #.....................................................................................................
       ### Special-case starred triggers: ###
       if from_sname is '*'
