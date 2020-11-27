@@ -62,24 +62,29 @@ set = ( target, key, value ) ->
 class Intermatic
 
   #---------------------------------------------------------------------------------------------------------
+  # constructor: ( fname, fsmd ) ->
   constructor: ( fsmd ) ->
+
     # validate.fsmd fsmd
-    @reserved     = freeze [ 'void', 'start', 'stop', 'goto', 'change', 'fail', ]
-    @fsmd         = freeze fsmd
-    @triggers     = {}
-    @_state       = 'void'
-    # @states       = {}
-    @before       = {}
-    @enter        = {}
-    @stay         = {}
-    @leave        = {}
-    @after        = {}
-    @my           = {}
-    @our          = null
+    @_covered_names = new Set()
+    @reserved       = freeze [ 'void', 'start', 'stop', 'goto', 'change', 'fail', ]
+    @fsmd           = freeze fsmd
+    @triggers       = {}
+    @_state         = 'void'
+    # @states         = {}
+    @before         = {}
+    @enter          = {}
+    @stay           = {}
+    @leave          = {}
+    @after          = {}
+    @my             = {}
+    @up             = null
     @_compile_triggers()
     @_compile_transitioners()
     @_compile_handlers()
     @_compile_goto()
+    @_compile_subfsms()
+    @_copy_other_attributes()
 
   #---------------------------------------------------------------------------------------------------------
   Object.defineProperties @prototype,
@@ -167,6 +172,7 @@ class Intermatic
 
   #---------------------------------------------------------------------------------------------------------
   _compile_transitioners: ->
+    @_covered_names.add 'triggers'
     for tname, from_and_to_states of @triggers
       do ( tname, from_and_to_states ) =>
         ### NOTE we *could* allow custom transitioners but that would only replicate behavior available
@@ -174,6 +180,7 @@ class Intermatic
         transitioner = @fsmd[ tname ] ? @_get_transitioner tname, from_and_to_states ###
         transitioner = @_get_transitioner tname, from_and_to_states
         set @, tname, transitioner
+        @_covered_names.add tname
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -181,12 +188,14 @@ class Intermatic
     ### TAINT add handlers for trigger, change ###
     ### TAINT check names against reserved ###
     for category in [ 'before', 'enter', 'stay', 'leave', 'after', ]
+      @_covered_names.add category
       for name, handler of @fsmd[ category ] ? {}
         @[ category ][ name ] = handler.bind @
     return null
 
   #---------------------------------------------------------------------------------------------------------
   _compile_goto: ->
+    @_covered_names.add 'goto'
     if ( goto = @fsmd.goto )?
       unless goto is '*'
         throw new Error "^interstate/_compile_handlers@776^ expected '*' for key `goto`, got #{rpr goto}"
@@ -195,7 +204,26 @@ class Intermatic
         transitioner to_sname
     return null
 
+  #---------------------------------------------------------------------------------------------------------
+  _compile_subfsms: ->
+    @_covered_names.add 'my'
+    return null unless @fsmd.my?
+    for sub_fname, sub_fsmd of @fsmd.my
+      sub_fsmd  = { sub_fsmd..., }
+      if sub_fsmd.name? and sub_fsmd.name isnt sub_fname
+        throw new Error "^interstate/_compile_subfsms@506^ name mismatch, got #{rpr sub_fname}, #{rpr sub_fsmd.name}"
+      sub_fsmd.name     = sub_fname
+      set sub_fsmd, 'up', @
+      @my[ sub_fname ]  = new @constructor sub_fsmd
+      # debug '^4444^', @fsmd.my
+    return null
 
+  #---------------------------------------------------------------------------------------------------------
+  _copy_other_attributes: ->
+    for pname, propd of Object.getOwnPropertyDescriptors @fsmd
+      continue if @_covered_names.has pname
+      Object.defineProperty @, pname, propd
+    return null
 
 ############################################################################################################
 module.exports = Intermatic
