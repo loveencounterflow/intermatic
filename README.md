@@ -81,6 +81,11 @@ alpha_btn:
   * specials:
     * `goto`
     * `name`
+  * custom:
+    * all attributes and properties except those mentioned above will be copied from the FSMD to the
+      resulting FSM, preserving their [property
+      descriptors](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Object/defineProperty),
+      meaning that things like computed properties, proxies, read-only values &c. will be preserved.
 
 <!-- All Intermatic FSMs are 'potentially compound', i.e. an Intermatic instance can always potentially hold  -->
 
