@@ -86,24 +86,28 @@
     //-----------------------------------------------------------------------------------------------------------
     class Intermatic {
       //---------------------------------------------------------------------------------------------------------
+      // constructor: ( fname, fsmd ) ->
       constructor(fsmd) {
         // validate.fsmd fsmd
+        this._covered_names = new Set();
         this.reserved = freeze(['void', 'start', 'stop', 'goto', 'change', 'fail']);
         this.fsmd = freeze(fsmd);
         this.triggers = {};
         this._state = 'void';
-        // @states       = {}
+        // @states         = {}
         this.before = {};
         this.enter = {};
         this.stay = {};
         this.leave = {};
         this.after = {};
         this.my = {};
-        this.our = null;
+        this.up = null;
         this._compile_triggers();
         this._compile_transitioners();
         this._compile_handlers();
         this._compile_goto();
+        this._compile_subfsms();
+        this._copy_other_attributes();
       }
 
       //---------------------------------------------------------------------------------------------------------
@@ -253,6 +257,7 @@
       //---------------------------------------------------------------------------------------------------------
       _compile_transitioners() {
         var from_and_to_states, ref, tname;
+        this._covered_names.add('triggers');
         ref = this.triggers;
         for (tname in ref) {
           from_and_to_states = ref[tname];
@@ -262,7 +267,8 @@
                    transitioner = @fsmd[ tname ] ? @_get_transitioner tname, from_and_to_states */
             var transitioner;
             transitioner = this._get_transitioner(tname, from_and_to_states);
-            return set(this, tname, transitioner);
+            set(this, tname, transitioner);
+            return this._covered_names.add(tname);
           })(tname, from_and_to_states);
         }
         return null;
@@ -276,6 +282,7 @@
         /* TAINT check names against reserved */
         for (i = 0, len = ref.length; i < len; i++) {
           category = ref[i];
+          this._covered_names.add(category);
           ref2 = (ref1 = this.fsmd[category]) != null ? ref1 : {};
           for (name in ref2) {
             handler = ref2[name];
@@ -288,6 +295,7 @@
       //---------------------------------------------------------------------------------------------------------
       _compile_goto() {
         var goto, transitioner;
+        this._covered_names.add('goto');
         if ((goto = this.fsmd.goto) != null) {
           if (goto !== '*') {
             throw new Error(`^interstate/_compile_handlers@776^ expected '*' for key \`goto\`, got ${rpr(goto)}`);
@@ -296,6 +304,42 @@
           set(this, 'goto', (to_sname) => {
             return transitioner(to_sname);
           });
+        }
+        return null;
+      }
+
+      //---------------------------------------------------------------------------------------------------------
+      _compile_subfsms() {
+        var ref, sub_fname, sub_fsmd;
+        this._covered_names.add('my');
+        if (this.fsmd.my == null) {
+          return null;
+        }
+        ref = this.fsmd.my;
+        for (sub_fname in ref) {
+          sub_fsmd = ref[sub_fname];
+          sub_fsmd = {...sub_fsmd};
+          if ((sub_fsmd.name != null) && sub_fsmd.name !== sub_fname) {
+            throw new Error(`^interstate/_compile_subfsms@506^ name mismatch, got ${rpr(sub_fname)}, ${rpr(sub_fsmd.name)}`);
+          }
+          sub_fsmd.name = sub_fname;
+          set(sub_fsmd, 'up', this);
+          this.my[sub_fname] = new this.constructor(sub_fsmd);
+        }
+        // debug '^4444^', @fsmd.my
+        return null;
+      }
+
+      //---------------------------------------------------------------------------------------------------------
+      _copy_other_attributes() {
+        var pname, propd, ref;
+        ref = Object.getOwnPropertyDescriptors(this.fsmd);
+        for (pname in ref) {
+          propd = ref[pname];
+          if (this._covered_names.has(pname)) {
+            continue;
+          }
+          Object.defineProperty(this, pname, propd);
         }
         return null;
       }
