@@ -1,12 +1,13 @@
 
 
 
-# InterMatic
+# 🄸🄽🅃🄴🅁🄼🄰🅃🄸🄲
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
+  - [Finite State Machine Description Objects (FSMDs)](#finite-state-machine-description-objects-fsmds)
 - [To Do](#to-do)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -54,6 +55,91 @@ alpha_btn:
 
 ```
 
+## Finite State Machine Description Objects (FSMDs)
+
+* In order to instantiate an FSM, use `new Intermatic fsmd` where `fsmd` is an object that describes the
+  details of the state machine—a **F**inite **S**tate **M**achine **D**escription.
+
+* The fields of an FSMD are:
+
+  * Declaring triggers:
+    * `triggers`
+    * `cyclers` (Not Implemented)
+
+  * Lifecycle Attributes:
+
+    * LAs concerning triggers:
+      * `before`
+      * `after`
+
+    * LAs concerning states:
+      * `enter`
+      * `stay`
+      * `leave`
+      * `change`
+
+  * specials:
+    * `goto`
+    * `name`
+
+<!-- All Intermatic FSMs are 'potentially compound', i.e. an Intermatic instance can always potentially hold  -->
+
+* An Intermatic compound FSM (cFSM) has a tree structure
+* which implies that there must be exactly one root object.
+* The root object is always an FSM; however,
+* since FSMs can be 'empty' (i.e. have no other functionality than a `start()` method which transitions from
+  the implicit `void` to the same `void` state)
+* may or may not have a name (be named or anonymous)
+* and may contain zero or more sub-FSMs
+* all of which must be named.
+
+* Unreachable states are states that can not be reached by any kind of proper (named) trigger;
+* these make sense only for FSMs that have a `goto()` method.
+* Unreachable states cause an error on instantiation unless licensed in the configuration (FSMD) by setting
+  `unreachable: true`.
+
+* Multiple terminal states are not a problem.
+
+
+```
+fsm = {
+  foobar: {
+    triggers: [ ... ],
+    before:   { ... },
+    enter:    { ... },
+    ... }
+```
+
+```
+fsm = {
+  name:     'foobar',
+  triggers: [ ... ],
+  before:   { ... },
+  enter:    { ... },
+  ... }
+```
+
+or an object with
+
+or
+
+```
+fsm = {
+  foobar: {
+    name:     'foobar',
+    triggers: [ ... ],
+    before:   { ... },
+    enter:    { ... },
+    ... }
+```
+
+
+```coffee
+fsm_1 = new Intermatic { my: { foo: { ... }, bar: { ... }, }  }
+fsm_1 = new Intermatic { foo: { ... },              }
+fsm_2 = new Intermatic { foo: { ... }, bar: { ... } }
+````
+
 
 
  * `{ alpha_btn: { lamp: 'lit', color: 'green', label: 'go', } }`
@@ -91,6 +177,6 @@ fsm.goto 'lit'
 
 * [ ] implement `goto` with list of target (or source and target?) states
 * [ ] implement `toggle`
-
+* [ ] implement trigger cancellation (using API call, not return value)
 
 
