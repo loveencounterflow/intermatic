@@ -87,11 +87,16 @@ alpha_btn:
 * An Intermatic compound FSM (cFSM) has a tree structure
 * which implies that there must be exactly one root object.
 * The root object is always an FSM; however,
-* since FSMs can be 'empty' (i.e. have no other functionality than a `start()` method which transitions from
-  the implicit `void` to the same `void` state)
-* may or may not have a name (be named or anonymous)
+* like any FSM, the root FSM can be 'empty' (i.e. have no other functionality than a `start()` method which
+  transitions from the implicit `void` to the same `void` state);
+* the root FSM may or may not have a name (be named or anonymous)
 * and may contain zero or more sub-FSMs
 * all of which must be named.
+* Compound and simple FSMs are instances of `Intermatic`,
+* simple FSMs do not have sub-FSMs under attribute `my` in their FSMDs, but
+* compound FSMs *do* have one or more sub-FSMs declared under their FSMD's `my` attribute.
+* Since attribute `fsmd.my` must be an object when defined, it follows that all sub-FSMs must implicitly
+  have unique names.
 
 * Unreachable states are states that can not be reached by any kind of proper (named) trigger;
 * these make sense only for FSMs that have a `goto()` method.
@@ -179,4 +184,19 @@ fsm.goto 'lit'
 * [ ] implement `toggle`
 * [ ] implement trigger cancellation (using API call, not return value)
 
-
+<!--
+* [ ] consider using more flexible, clearer(?) syntax where triggers may be grouped as seen fit, ex.:
+  ```
+  triggers:
+    from:
+      'void':  { via: 'start', to: 'lit', }
+    via:
+      'toggle': [
+        { from: 'lit', to: 'dark',  }
+        { from: 'dark', to: 'lit',  }
+        ]
+      'reset': { to: 'void', }
+    to:
+      'lit': { from: 'dark', via: 'switch_on' }
+  ```
+ -->
