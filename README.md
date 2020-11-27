@@ -19,14 +19,18 @@ state machine for NodeJS and the browser
 * `fsm.goto = ( to_sname ) -> ...` will be present when an entry `goto: '*'` is present in the top level
   of the FSMD.
 
-* FSMs can be nested, with a sub-FSMs `lamp` referred to by `fsm.my.lamp`, and the super-FSM (i.e. parent in
-  the tree) referred to from a sub-FSM as `lamp.we` (i.e. `fsm.my.lamp.we === fsm` holds).
+* FSMs can be nested, with a sub-FSM `lamp` declared *in the FSM description* as `fsmd.subs.lamp`, and
+  referred to *in the FSM instance* simply by `fsm.lamp`.
 
-* Nested FSMs thus provide limited namespace such that when a more complex FSM for, say, represent the
-  statuses of three backlit buttons `alpha_btn`, `beta_btn`, `gamma_btn` is defined, each button can get its
-  very own `lamp` as `alpha_btn.my.lamp`, `beta_btn.my.lamp`, `gamma_btn.my.lamp`, where the definition of
-  each `lamp` can be identical (or variants along the same pattern), yet act independently of the other
-  `lamp`s.
+* The parent FSM can be referred to from the sub-FSM via its attrbute `up`, so that e.g. `button.lamp.up` is
+  identical to `button`.
+
+* **NOTE** in the future, some of the details of declaring and referring to sub-FSMs may change.
+
+* Nested FSMs thus provide namespaces. For example, an appliance with three buttons `alpha_btn`, `beta_btn`,
+  `gamma_btn` can have one `lamp` for each button which will be referred to as `alpha_btn.lamp`,
+  `beta_btn.lamp`, `gamma_btn.lamp`. The definition of each `lamp` can be identical (or variants along the
+  same pattern), yet act independently of the other `lamp`s.
 
 * Nested FSMs are also a measure to deal with the [combinatorial state
   explosion](https://en.wikipedia.org/wiki/Combinatorial_explosion).
@@ -145,7 +149,7 @@ fsm = {
 
 
 ```coffee
-fsm_1 = new Intermatic { my: { foo: { ... }, bar: { ... }, }  }
+fsm_1 = new Intermatic { subs: { foo: { ... }, bar: { ... }, }  }
 fsm_1 = new Intermatic { foo: { ... },              }
 fsm_2 = new Intermatic { foo: { ... }, bar: { ... } }
 ````

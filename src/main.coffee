@@ -77,7 +77,6 @@ class Intermatic
     @stay           = {}
     @leave          = {}
     @after          = {}
-    @my             = {}
     @up             = null
     @_compile_triggers()
     @_compile_transitioners()
@@ -206,16 +205,16 @@ class Intermatic
 
   #---------------------------------------------------------------------------------------------------------
   _compile_subfsms: ->
-    @_covered_names.add 'my'
-    return null unless @fsmd.my?
-    for sub_fname, sub_fsmd of @fsmd.my
+    @_covered_names.add 'sub_fsms'
+    return null unless @fsmd.sub_fsms?
+    for sub_fname, sub_fsmd of @fsmd.sub_fsms
       sub_fsmd  = { sub_fsmd..., }
       if sub_fsmd.name? and sub_fsmd.name isnt sub_fname
         throw new Error "^interstate/_compile_subfsms@506^ name mismatch, got #{rpr sub_fname}, #{rpr sub_fsmd.name}"
-      sub_fsmd.name     = sub_fname
+      sub_fsmd.name = sub_fname
       set sub_fsmd, 'up', @
-      @my[ sub_fname ]  = new @constructor sub_fsmd
-      # debug '^4444^', @fsmd.my
+      @_covered_names.add sub_fname
+      set @, sub_fname, new @constructor sub_fsmd
     return null
 
   #---------------------------------------------------------------------------------------------------------
