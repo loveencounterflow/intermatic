@@ -109,6 +109,8 @@
         this._compile_goto();
         this._compile_subfsms();
         this._copy_other_attributes();
+        delete this._covered_names;
+        return null;
       }
 
       //---------------------------------------------------------------------------------------------------------
