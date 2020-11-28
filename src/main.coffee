@@ -86,6 +86,8 @@ class Intermatic
     @_compile_goto()
     @_compile_subfsms()
     @_copy_other_attributes()
+    delete @_covered_names
+    return null
 
   #---------------------------------------------------------------------------------------------------------
   Object.defineProperties @prototype,
