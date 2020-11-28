@@ -92,10 +92,10 @@ class Intermatic
     #-------------------------------------------------------------------------------------------------------
     lstate:
       get:            -> @_lstate
-      set: ( sname  ) ->
-        if typeof sname isnt 'string'
-          throw new Error "^interstate/set/lstate@501^ lstate name must be text, got #{rpr sname}"
-        @_lstate = sname
+      set: ( lstate ) ->
+        if typeof lstate isnt 'string'
+          throw new Error "^interstate/set/lstate@501^ lstate name must be text, got #{rpr lstate}"
+        @_lstate = lstate
     #-------------------------------------------------------------------------------------------------------
     cstate:
       get: ->
@@ -113,68 +113,68 @@ class Intermatic
     has_start     = false
     @starts_with  = null
     starred       = {}
-    snames        = new Set [ 'void', ]
+    lstates        = new Set [ 'void', ]
     triggers      = [ ( @fsmd.triggers ? [] )..., ]
     tnames        = new Set ( t[ 1 ] for t in triggers )
     #.......................................................................................................
     unless tnames.has 'start'
-      first_sname = triggers[ 0 ]?[ 2 ] ? 'void'
-      triggers.unshift [ 'void', 'start', first_sname, ]
+      first_lstate = triggers[ 0 ]?[ 2 ] ? 'void'
+      triggers.unshift [ 'void', 'start', first_lstate, ]
     #.......................................................................................................
     for triplet in triggers
       ### TAINT validate.list_of.list triplet ###
       ### TAINT validate.tname tname ###
       ### TAINT validate that free of collision ###
-      [ from_sname, tname, to_sname, ] = triplet
+      [ from_lstate, tname, to_lstate, ] = triplet
       #.....................................................................................................
-      ### TAINT also validate that tuples [ from_sname, tname, ] unique ###
+      ### TAINT also validate that tuples [ from_lstate, tname, ] unique ###
       if tname is 'start'
         throw new Error "^interstate/fail@556^ duplica declaration of `start`: #{rpr triplet}" if has_start
         has_start     = true
-        @starts_with  = to_sname
+        @starts_with  = to_lstate
       #.....................................................................................................
       ### Special-case starred triggers: ###
-      if from_sname is '*'
-        starred[ tname ] = to_sname
+      if from_lstate is '*'
+        starred[ tname ] = to_lstate
         continue
       #.....................................................................................................
-      snames.add from_sname
-      snames.add to_sname
-      set ( @triggers[ tname ] ?= {} ), from_sname, to_sname
+      lstates.add from_lstate
+      lstates.add to_lstate
+      set ( @triggers[ tname ] ?= {} ), from_lstate, to_lstate
     #.......................................................................................................
-    for starred_name, to_sname of starred
-      for from_sname from snames
-        set ( @triggers[ starred_name ] ?= {} ), from_sname, to_sname
+    for starred_name, to_lstate of starred
+      for from_lstate from lstates
+        set ( @triggers[ starred_name ] ?= {} ), from_lstate, to_lstate
     #.......................................................................................................
     return null
 
   #---------------------------------------------------------------------------------------------------------
-  _get_transitioner: ( tname, from_and_to_states = null ) ->
+  _get_transitioner: ( tname, from_and_to_lstates = null ) ->
     ### TAINT too much logic to be done at in run time, try to precompile more ###
     $key = '^trigger'
     return transitioner = ( P... ) =>
       ### TAINT use single transitioner method for all triggers? ###
-      from_sname  = @lstate
+      from_lstate  = @lstate
       #-------------------------------------------------------------------------------------------------
-      if from_and_to_states?
-        unless ( to_sname = from_and_to_states[ @lstate ] )?
-          trigger = freeze { $key, failed: true, from: from_sname, via: tname, }
+      if from_and_to_lstates?
+        unless ( to_lstate = from_and_to_lstates[ @lstate ] )?
+          trigger = freeze { $key, failed: true, from: from_lstate, via: tname, }
           return @fsmd.fail trigger if @fsmd.fail?
           return @fail trigger
       else
-        [ to_sname, P..., ] = P
+        [ to_lstate, P..., ] = P
       #-------------------------------------------------------------------------------------------------
-      changed     = to_sname isnt from_sname
-      trigger     = freeze { $key, from: from_sname, via: tname, to: to_sname, changed, }
+      changed     = to_lstate isnt from_lstate
+      trigger     = freeze { $key, from: from_lstate, via: tname, to: to_lstate, changed, }
       ### TAINT add extra arguments P ###
       @before.trigger?          trigger
       @before.change?           trigger if changed
-      @before[  tname       ]?  trigger
-      @leave[   from_sname  ]?  trigger if changed
-      @lstate     = to_sname if changed
-      @stay[    to_sname    ]?  trigger if not changed
-      @enter[   to_sname    ]?  trigger if changed
-      @after[   tname       ]?  trigger
+      @before[ tname        ]?  trigger
+      @leave[  from_lstate  ]?  trigger if changed
+      @lstate     = to_lstate if changed
+      @stay[   to_lstate    ]?  trigger if not changed
+      @enter[  to_lstate    ]?  trigger if changed
+      @after[  tname        ]?  trigger
       @after.change?            trigger if changed
       @after.trigger?           trigger
       return null
@@ -182,12 +182,12 @@ class Intermatic
   #---------------------------------------------------------------------------------------------------------
   _compile_transitioners: ->
     @_covered_names.add 'triggers'
-    for tname, from_and_to_states of @triggers
-      do ( tname, from_and_to_states ) =>
+    for tname, from_and_to_lstates of @triggers
+      do ( tname, from_and_to_lstates ) =>
         ### NOTE we *could* allow custom transitioners but that would only replicate behavior available
         via `fsm.before[ tname ]()`, `fsm.after[ tname ]()`:
-        transitioner = @fsmd[ tname ] ? @_get_transitioner tname, from_and_to_states ###
-        transitioner = @_get_transitioner tname, from_and_to_states
+        transitioner = @fsmd[ tname ] ? @_get_transitioner tname, from_and_to_lstates ###
+        transitioner = @_get_transitioner tname, from_and_to_lstates
         set @, tname, transitioner
         @_covered_names.add tname
     return null
@@ -209,8 +209,8 @@ class Intermatic
       unless goto is '*'
         throw new Error "^interstate/_compile_handlers@776^ expected '*' for key `goto`, got #{rpr goto}"
       transitioner = @_get_transitioner 'goto', null
-      set @, 'goto', ( to_sname ) =>
-        transitioner to_sname
+      set @, 'goto', ( to_lstate ) =>
+        transitioner to_lstate
     return null
 
   #---------------------------------------------------------------------------------------------------------
