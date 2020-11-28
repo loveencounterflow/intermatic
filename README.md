@@ -192,6 +192,15 @@ fsm.goto 'lit'
 * [ ] implement `goto` with list of target (or source and target?) states
 * [ ] implement `toggle`
 * [ ] implement trigger cancellation (using API call, not return value)
+* [ ] discuss namespaces: trigger names and names of sub-FSMs originate in different parts of an FSMD but
+  end up sharing one namespace when the FSM is constructed
+* [ ] percolate/bubble triggers (from sub to up? both directions? all FSMs in tree?)
+* [ ] when one trigger bubbles through the FSMs, how to tell when that trigger has been processed? Two
+  consecutive events could have same name. Use ID?
+* [ ] implement `fsm.tryto 't'` to call trigger `t` only when allowed, avoiding calls to `fail()`
+* [ ] implement `fsm.can 't'` to test whether trigger `t` may be emitted from current state
+* [ ] implement attribute-access (cf. `Multimix`) for `goto`, `tryto` such that `fsm.goto 's'`, `fsm.tryto
+  't'` is equivalent to `fsm.goto.s()`, `fsm.tryto.t()`
 
 <!--
 * [ ] consider using more flexible, clearer(?) syntax where triggers may be grouped as seen fit, ex.:
