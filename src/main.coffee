@@ -70,6 +70,8 @@ class Intermatic
     @reserved       = freeze [ 'void', 'start', 'stop', 'goto', 'change', 'fail', ]
     @fsmd           = freeze fsmd
     @triggers       = {}
+    @subfsm_names   = []
+    @has_subfsms    = false
     @_state         = 'void'
     # @states         = {}
     @before         = {}
@@ -87,12 +89,20 @@ class Intermatic
 
   #---------------------------------------------------------------------------------------------------------
   Object.defineProperties @prototype,
+    #-------------------------------------------------------------------------------------------------------
     state:
       get:            -> @_state
       set: ( sname  ) ->
         if typeof sname isnt 'string'
           throw new Error "^interstate/set/state@501^ state name must be text, got #{rpr sname}"
         @_state = sname
+    #-------------------------------------------------------------------------------------------------------
+    cstate:
+      get: ->
+        return @state unless @has_subfsms
+        R = { _: @state, }
+        R[ subfsm_name ] = @[ subfsm_name ].cstate for subfsm_name in @subfsm_names
+        return freeze R
 
   #---------------------------------------------------------------------------------------------------------
   fail: ( trigger ) ->
@@ -205,16 +215,19 @@ class Intermatic
 
   #---------------------------------------------------------------------------------------------------------
   _compile_subfsms: ->
-    @_covered_names.add 'sub_fsms'
-    return null unless @fsmd.sub_fsms?
-    for sub_fname, sub_fsmd of @fsmd.sub_fsms
+    @_covered_names.add 'subs'
+    subfsm_names = []
+    for sub_fname, sub_fsmd of @fsmd.subs ? {}
       sub_fsmd  = { sub_fsmd..., }
       if sub_fsmd.name? and sub_fsmd.name isnt sub_fname
         throw new Error "^interstate/_compile_subfsms@506^ name mismatch, got #{rpr sub_fname}, #{rpr sub_fsmd.name}"
       sub_fsmd.name = sub_fname
       set sub_fsmd, 'up', @
       @_covered_names.add sub_fname
+      subfsm_names.push   sub_fname
       set @, sub_fname, new @constructor sub_fsmd
+    @subfsm_names = freeze subfsm_names
+    @has_subfsms  = subfsm_names.length > 0
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -223,6 +236,7 @@ class Intermatic
       continue if @_covered_names.has pname
       Object.defineProperty @, pname, propd
     return null
+
 
 ############################################################################################################
 module.exports = Intermatic
