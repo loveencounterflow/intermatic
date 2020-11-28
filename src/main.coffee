@@ -72,7 +72,7 @@ class Intermatic
     @triggers       = {}
     @subfsm_names   = []
     @has_subfsms    = false
-    @_state         = 'void'
+    @_lstate        = 'void'
     # @states         = {}
     @before         = {}
     @enter          = {}
@@ -90,17 +90,17 @@ class Intermatic
   #---------------------------------------------------------------------------------------------------------
   Object.defineProperties @prototype,
     #-------------------------------------------------------------------------------------------------------
-    state:
-      get:            -> @_state
+    lstate:
+      get:            -> @_lstate
       set: ( sname  ) ->
         if typeof sname isnt 'string'
-          throw new Error "^interstate/set/state@501^ state name must be text, got #{rpr sname}"
-        @_state = sname
+          throw new Error "^interstate/set/lstate@501^ lstate name must be text, got #{rpr sname}"
+        @_lstate = sname
     #-------------------------------------------------------------------------------------------------------
     cstate:
       get: ->
-        return @state unless @has_subfsms
-        R = { _: @state, }
+        return @lstate unless @has_subfsms
+        R = { _: @lstate, }
         R[ subfsm_name ] = @[ subfsm_name ].cstate for subfsm_name in @subfsm_names
         return freeze R
 
@@ -154,10 +154,10 @@ class Intermatic
     $key = '^trigger'
     return transitioner = ( P... ) =>
       ### TAINT use single transitioner method for all triggers? ###
-      from_sname  = @state
+      from_sname  = @lstate
       #-------------------------------------------------------------------------------------------------
       if from_and_to_states?
-        unless ( to_sname = from_and_to_states[ @state ] )?
+        unless ( to_sname = from_and_to_states[ @lstate ] )?
           trigger = freeze { $key, failed: true, from: from_sname, via: tname, }
           return @fsmd.fail trigger if @fsmd.fail?
           return @fail trigger
@@ -171,7 +171,7 @@ class Intermatic
       @before.change?           trigger if changed
       @before[  tname       ]?  trigger
       @leave[   from_sname  ]?  trigger if changed
-      @state      = to_sname if changed
+      @lstate     = to_sname if changed
       @stay[    to_sname    ]?  trigger if not changed
       @enter[   to_sname    ]?  trigger if changed
       @after[   tname       ]?  trigger
