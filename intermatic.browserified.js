@@ -93,6 +93,8 @@
         this.reserved = freeze(['void', 'start', 'stop', 'goto', 'change', 'fail']);
         this.fsmd = freeze(fsmd);
         this.triggers = {};
+        this.subfsm_names = [];
+        this.has_subfsms = false;
         this._state = 'void';
         // @states         = {}
         this.before = {};
@@ -326,6 +328,7 @@
           set(this, sub_fname, new this.constructor(sub_fsmd));
         }
         this.subfsm_names = freeze(subfsm_names);
+        this.has_subfsms = subfsm_names.length > 0;
         return null;
       }
 
@@ -347,6 +350,7 @@
 
     //---------------------------------------------------------------------------------------------------------
     Object.defineProperties(Intermatic.prototype, {
+      //-------------------------------------------------------------------------------------------------------
       state: {
         get: function() {
           return this._state;
@@ -358,18 +362,22 @@
           return this._state = sname;
         }
       },
+      //-------------------------------------------------------------------------------------------------------
       cstate: {
         get: function() {
           var R, i, len, ref, subfsm_name;
+          if (!this.has_subfsms) {
+            return this.state;
+          }
           R = {
             _: this.state
           };
           ref = this.subfsm_names;
           for (i = 0, len = ref.length; i < len; i++) {
             subfsm_name = ref[i];
-            R[subfsm_name] = this[subfsm_name].state;
+            R[subfsm_name] = this[subfsm_name].cstate;
           }
-          return R;
+          return freeze(R);
         }
       }
     });
