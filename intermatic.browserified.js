@@ -95,7 +95,7 @@
         this.triggers = {};
         this.subfsm_names = [];
         this.has_subfsms = false;
-        this._state = 'void';
+        this._lstate = 'void';
         // @states         = {}
         this.before = {};
         this.enter = {};
@@ -184,10 +184,10 @@
         return transitioner = (...P) => {
           /* TAINT use single transitioner method for all triggers? */
           var base, base1, base2, base3, base4, base5, base6, base7, base8, changed, from_sname, to_sname, trigger;
-          from_sname = this.state;
+          from_sname = this.lstate;
           //-------------------------------------------------------------------------------------------------
           if (from_and_to_states != null) {
-            if ((to_sname = from_and_to_states[this.state]) == null) {
+            if ((to_sname = from_and_to_states[this.lstate]) == null) {
               trigger = freeze({
                 $key,
                 failed: true,
@@ -228,7 +228,7 @@
             }
           }
           if (changed) {
-            this.state = to_sname;
+            this.lstate = to_sname;
           }
           if (!changed) {
             if (typeof (base4 = this.stay)[to_sname] === "function") {
@@ -351,15 +351,15 @@
     //---------------------------------------------------------------------------------------------------------
     Object.defineProperties(Intermatic.prototype, {
       //-------------------------------------------------------------------------------------------------------
-      state: {
+      lstate: {
         get: function() {
-          return this._state;
+          return this._lstate;
         },
         set: function(sname) {
           if (typeof sname !== 'string') {
-            throw new Error(`^interstate/set/state@501^ state name must be text, got ${rpr(sname)}`);
+            throw new Error(`^interstate/set/lstate@501^ lstate name must be text, got ${rpr(sname)}`);
           }
-          return this._state = sname;
+          return this._lstate = sname;
         }
       },
       //-------------------------------------------------------------------------------------------------------
@@ -367,10 +367,10 @@
         get: function() {
           var R, i, len, ref, subfsm_name;
           if (!this.has_subfsms) {
-            return this.state;
+            return this.lstate;
           }
           R = {
-            _: this.state
+            _: this.lstate
           };
           ref = this.subfsm_names;
           for (i = 0, len = ref.length; i < len; i++) {
