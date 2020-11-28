@@ -121,11 +121,11 @@
         /* TAINT validate.list_of.list triplet */
         /* TAINT validate.tname tname */
         /* TAINT validate that free of collision */
-        var base, base1, first_sname, from_sname, has_start, i, len, ref, ref1, ref2, snames, starred, starred_name, t, tname, tnames, to_sname, triggers, triplet;
+        var base, base1, first_lstate, from_lstate, has_start, i, len, lstates, ref, ref1, ref2, starred, starred_name, t, tname, tnames, to_lstate, triggers, triplet;
         has_start = false;
         this.starts_with = null;
         starred = {};
-        snames = new Set(['void']);
+        lstates = new Set(['void']);
         triggers = [...((ref = this.fsmd.triggers) != null ? ref : [])];
         tnames = new Set((function() {
           var i, len, results;
@@ -138,38 +138,38 @@
         })());
         //.......................................................................................................
         if (!tnames.has('start')) {
-          first_sname = (ref1 = (ref2 = triggers[0]) != null ? ref2[2] : void 0) != null ? ref1 : 'void';
-          triggers.unshift(['void', 'start', first_sname]);
+          first_lstate = (ref1 = (ref2 = triggers[0]) != null ? ref2[2] : void 0) != null ? ref1 : 'void';
+          triggers.unshift(['void', 'start', first_lstate]);
         }
 //.......................................................................................................
         for (i = 0, len = triggers.length; i < len; i++) {
           triplet = triggers[i];
-          [from_sname, tname, to_sname] = triplet;
+          [from_lstate, tname, to_lstate] = triplet;
           //.....................................................................................................
-          /* TAINT also validate that tuples [ from_sname, tname, ] unique */
+          /* TAINT also validate that tuples [ from_lstate, tname, ] unique */
           if (tname === 'start') {
             if (has_start) {
               throw new Error(`^interstate/fail@556^ duplica declaration of \`start\`: ${rpr(triplet)}`);
             }
             has_start = true;
-            this.starts_with = to_sname;
+            this.starts_with = to_lstate;
           }
           //.....................................................................................................
           /* Special-case starred triggers: */
-          if (from_sname === '*') {
-            starred[tname] = to_sname;
+          if (from_lstate === '*') {
+            starred[tname] = to_lstate;
             continue;
           }
           //.....................................................................................................
-          snames.add(from_sname);
-          snames.add(to_sname);
-          set(((base = this.triggers)[tname] != null ? base[tname] : base[tname] = {}), from_sname, to_sname);
+          lstates.add(from_lstate);
+          lstates.add(to_lstate);
+          set(((base = this.triggers)[tname] != null ? base[tname] : base[tname] = {}), from_lstate, to_lstate);
         }
 //.......................................................................................................
         for (starred_name in starred) {
-          to_sname = starred[starred_name];
-          for (from_sname of snames) {
-            set(((base1 = this.triggers)[starred_name] != null ? base1[starred_name] : base1[starred_name] = {}), from_sname, to_sname);
+          to_lstate = starred[starred_name];
+          for (from_lstate of lstates) {
+            set(((base1 = this.triggers)[starred_name] != null ? base1[starred_name] : base1[starred_name] = {}), from_lstate, to_lstate);
           }
         }
         //.......................................................................................................
@@ -177,21 +177,21 @@
       }
 
       //---------------------------------------------------------------------------------------------------------
-      _get_transitioner(tname, from_and_to_states = null) {
+      _get_transitioner(tname, from_and_to_lstates = null) {
         /* TAINT too much logic to be done at in run time, try to precompile more */
         var $key, transitioner;
         $key = '^trigger';
         return transitioner = (...P) => {
           /* TAINT use single transitioner method for all triggers? */
-          var base, base1, base2, base3, base4, base5, base6, base7, base8, changed, from_sname, to_sname, trigger;
-          from_sname = this.lstate;
+          var base, base1, base2, base3, base4, base5, base6, base7, base8, changed, from_lstate, to_lstate, trigger;
+          from_lstate = this.lstate;
           //-------------------------------------------------------------------------------------------------
-          if (from_and_to_states != null) {
-            if ((to_sname = from_and_to_states[this.lstate]) == null) {
+          if (from_and_to_lstates != null) {
+            if ((to_lstate = from_and_to_lstates[this.lstate]) == null) {
               trigger = freeze({
                 $key,
                 failed: true,
-                from: from_sname,
+                from: from_lstate,
                 via: tname
               });
               if (this.fsmd.fail != null) {
@@ -200,15 +200,15 @@
               return this.fail(trigger);
             }
           } else {
-            [to_sname, ...P] = P;
+            [to_lstate, ...P] = P;
           }
           //-------------------------------------------------------------------------------------------------
-          changed = to_sname !== from_sname;
+          changed = to_lstate !== from_lstate;
           trigger = freeze({
             $key,
-            from: from_sname,
+            from: from_lstate,
             via: tname,
-            to: to_sname,
+            to: to_lstate,
             changed
           });
           if (typeof (base = this.before).trigger === "function") {
@@ -223,21 +223,21 @@
             base2[tname](trigger);
           }
           if (changed) {
-            if (typeof (base3 = this.leave)[from_sname] === "function") {
-              base3[from_sname](trigger);
+            if (typeof (base3 = this.leave)[from_lstate] === "function") {
+              base3[from_lstate](trigger);
             }
           }
           if (changed) {
-            this.lstate = to_sname;
+            this.lstate = to_lstate;
           }
           if (!changed) {
-            if (typeof (base4 = this.stay)[to_sname] === "function") {
-              base4[to_sname](trigger);
+            if (typeof (base4 = this.stay)[to_lstate] === "function") {
+              base4[to_lstate](trigger);
             }
           }
           if (changed) {
-            if (typeof (base5 = this.enter)[to_sname] === "function") {
-              base5[to_sname](trigger);
+            if (typeof (base5 = this.enter)[to_lstate] === "function") {
+              base5[to_lstate](trigger);
             }
           }
           if (typeof (base6 = this.after)[tname] === "function") {
@@ -257,20 +257,20 @@
 
       //---------------------------------------------------------------------------------------------------------
       _compile_transitioners() {
-        var from_and_to_states, ref, tname;
+        var from_and_to_lstates, ref, tname;
         this._covered_names.add('triggers');
         ref = this.triggers;
         for (tname in ref) {
-          from_and_to_states = ref[tname];
-          ((tname, from_and_to_states) => {
+          from_and_to_lstates = ref[tname];
+          ((tname, from_and_to_lstates) => {
             /* NOTE we *could* allow custom transitioners but that would only replicate behavior available
                    via `fsm.before[ tname ]()`, `fsm.after[ tname ]()`:
-                   transitioner = @fsmd[ tname ] ? @_get_transitioner tname, from_and_to_states */
+                   transitioner = @fsmd[ tname ] ? @_get_transitioner tname, from_and_to_lstates */
             var transitioner;
-            transitioner = this._get_transitioner(tname, from_and_to_states);
+            transitioner = this._get_transitioner(tname, from_and_to_lstates);
             set(this, tname, transitioner);
             return this._covered_names.add(tname);
-          })(tname, from_and_to_states);
+          })(tname, from_and_to_lstates);
         }
         return null;
       }
@@ -302,8 +302,8 @@
             throw new Error(`^interstate/_compile_handlers@776^ expected '*' for key \`goto\`, got ${rpr(goto)}`);
           }
           transitioner = this._get_transitioner('goto', null);
-          set(this, 'goto', (to_sname) => {
-            return transitioner(to_sname);
+          set(this, 'goto', (to_lstate) => {
+            return transitioner(to_lstate);
           });
         }
         return null;
@@ -355,11 +355,11 @@
         get: function() {
           return this._lstate;
         },
-        set: function(sname) {
-          if (typeof sname !== 'string') {
-            throw new Error(`^interstate/set/lstate@501^ lstate name must be text, got ${rpr(sname)}`);
+        set: function(lstate) {
+          if (typeof lstate !== 'string') {
+            throw new Error(`^interstate/set/lstate@501^ lstate name must be text, got ${rpr(lstate)}`);
           }
-          return this._lstate = sname;
+          return this._lstate = lstate;
         }
       },
       //-------------------------------------------------------------------------------------------------------
