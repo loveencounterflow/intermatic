@@ -90,7 +90,6 @@
       constructor(fsmd) {
         // validate.fsmd fsmd
         this._covered_names = new Set();
-        this._tid = 0;
         this.reserved = freeze(['void', 'start', 'stop', 'goto', 'change', 'fail']);
         this.fsmd = freeze(fsmd);
         this.triggers = {};
@@ -180,10 +179,10 @@
       }
 
       //---------------------------------------------------------------------------------------------------------
-      /* TAINT Trigger IDs may be ambiguous when several sub-FSMs have naemsake sub-FSMs themselves */
       _new_tid() {
-        this._tid += +1;
-        return `${this.name}#${this._tid}`;
+        var tid;
+        tid = this.constructor._tid++;
+        return `t${tid}`;
       }
 
       //---------------------------------------------------------------------------------------------------------
@@ -360,6 +359,9 @@
       }
 
     };
+
+    //---------------------------------------------------------------------------------------------------------
+    Intermatic._tid = 0;
 
     //---------------------------------------------------------------------------------------------------------
     Object.defineProperties(Intermatic.prototype, {
