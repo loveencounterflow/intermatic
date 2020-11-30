@@ -73,7 +73,8 @@ class Intermatic
     # @reserved       = freeze [ 'void', 'start', 'stop', 'goto', 'change', 'fail', ]
     @fsmd           = { fsmd..., }
     @triggers       = {}
-    @fsm_names  = []
+    @lstates        = null
+    @fsm_names      = []
     @has_subfsms    = false
     @_lstate        = 'void'
     # @states         = {}
@@ -88,6 +89,8 @@ class Intermatic
     @_compile_transitioners()
     @_compile_handlers()
     @_compile_goto()
+    @_compile_can()
+    @_compile_tryto()
     @_compile_subfsms()
     @_copy_other_attributes()
     delete @_covered_names
@@ -169,6 +172,7 @@ class Intermatic
       for from_lstate from lstates
         set ( @triggers[ starred_name ] ?= {} ), from_lstate, to_lstate
     #.......................................................................................................
+    @lstates = freeze [ lstates..., ]
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -236,8 +240,35 @@ class Intermatic
       unless goto is '*'
         throw new Error "^interstate/_compile_handlers@776^ expected '*' for key `goto`, got #{rpr goto}"
       transitioner = @_get_transitioner 'goto', null
-      set @, 'goto', ( to_lstate ) =>
-        transitioner to_lstate
+      goto = ( to_lstate, P... ) => transitioner to_lstate, P...
+      for to_lstate in @lstates
+        goto[ to_lstate ] = ( P... ) => transitioner to_lstate, P...
+      set @, 'goto', goto
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _compile_can: ->
+    @_covered_names.add 'can'
+    can = ( tname ) =>
+      unless ( trigger = @triggers[ tname ] )?
+        throw new Error "^interstate/can@822^ unknown trigger #{rpr tname}"
+      return trigger[ @lstate ]?
+    for tname of @triggers
+      can[ tname ] = ( P... ) => can tname, P...
+    set @, 'can', can
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _compile_tryto: ->
+    @_covered_names.add 'tryto'
+    tryto = ( tname, P... ) =>
+      return false unless @can tname
+      ### TAINT we will possibly want to return some kind of result from trigger ###
+      @[ tname ] P...
+      return true
+    for tname of @triggers
+      tryto[ tname ] = ( P... ) => tryto tname, P...
+    set @, 'tryto', tryto
     return null
 
   #---------------------------------------------------------------------------------------------------------
