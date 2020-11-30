@@ -62,6 +62,9 @@ set = ( target, key, value ) ->
 class Intermatic
 
   #---------------------------------------------------------------------------------------------------------
+  @_tid: 0
+
+  #---------------------------------------------------------------------------------------------------------
   # constructor: ( fname, fsmd ) ->
   constructor: ( fsmd ) ->
 
@@ -151,23 +154,27 @@ class Intermatic
     return null
 
   #---------------------------------------------------------------------------------------------------------
+  _new_tid: -> tid = @constructor._tid++; return "t#{tid}"
+
+  #---------------------------------------------------------------------------------------------------------
   _get_transitioner: ( tname, from_and_to_lstates = null ) ->
     ### TAINT too much logic to be done at in run time, try to precompile more ###
     $key = '^trigger'
     return transitioner = ( P... ) =>
       ### TAINT use single transitioner method for all triggers? ###
-      from_lstate  = @lstate
+      from_lstate = @lstate
+      id          = @_new_tid()
       #-------------------------------------------------------------------------------------------------
       if from_and_to_lstates?
         unless ( to_lstate = from_and_to_lstates[ @lstate ] )?
-          trigger = freeze { $key, failed: true, from: from_lstate, via: tname, }
+          trigger = freeze { $key, id, failed: true, from: from_lstate, via: tname, }
           return @fsmd.fail trigger if @fsmd.fail?
           return @fail trigger
       else
         [ to_lstate, P..., ] = P
       #-------------------------------------------------------------------------------------------------
       changed     = to_lstate isnt from_lstate
-      trigger     = freeze { $key, from: from_lstate, via: tname, to: to_lstate, changed, }
+      trigger     = freeze { $key, id, from: from_lstate, via: tname, to: to_lstate, changed, }
       ### TAINT add extra arguments P ###
       @before.trigger?          trigger
       @before.change?           trigger if changed
