@@ -71,7 +71,7 @@ class Intermatic
     # validate.fsmd fsmd
     @_covered_names = new Set()
     @reserved       = freeze [ 'void', 'start', 'stop', 'goto', 'change', 'fail', ]
-    @fsmd           = freeze fsmd
+    @fsmd           = { fsmd..., }
     @triggers       = {}
     @subfsm_names   = []
     @has_subfsms    = false
@@ -83,6 +83,7 @@ class Intermatic
     @leave          = {}
     @after          = {}
     @up             = null
+    @_compile_cyclers()
     @_compile_triggers()
     @_compile_transitioners()
     @_compile_handlers()
@@ -114,12 +115,28 @@ class Intermatic
     throw new Error "^interstate/fail@556^ trigger not allowed: #{rpr trigger}"
 
   #---------------------------------------------------------------------------------------------------------
+  _compile_cyclers: ->
+    triggers = @fsmd.triggers = [ ( @fsmd.triggers ? [] )..., ]
+    return null unless ( cyclers = @fsmd.cyclers )?
+    #.......................................................................................................
+    for tname, lstates of cyclers
+      debug '^33398^', lstates
+      for cur_lstate, cur_idx in lstates
+        nxt_idx     = ( cur_idx + 1 ) %% lstates.length
+        nxt_lstate  = lstates[ nxt_idx ]
+        triggers.push [ cur_lstate, tname, nxt_lstate, ]
+    #.......................................................................................................
+    freeze @fsmd
+    debug '^222233^', @fsmd
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
   _compile_triggers: ->
     has_start     = false
     @starts_with  = null
     starred       = {}
-    lstates        = new Set [ 'void', ]
-    triggers      = [ ( @fsmd.triggers ? [] )..., ]
+    lstates       = new Set [ 'void', ]
+    triggers      = @fsmd.triggers ### already a copy at this point, see @_compile_cyclers ###
     tnames        = new Set ( t[ 1 ] for t in triggers )
     #.......................................................................................................
     unless tnames.has 'start'
