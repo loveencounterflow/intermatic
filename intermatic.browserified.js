@@ -90,6 +90,7 @@
       constructor(fsmd) {
         // validate.fsmd fsmd
         this._covered_names = new Set();
+        this._tid = 0;
         this.reserved = freeze(['void', 'start', 'stop', 'goto', 'change', 'fail']);
         this.fsmd = freeze(fsmd);
         this.triggers = {};
@@ -179,19 +180,28 @@
       }
 
       //---------------------------------------------------------------------------------------------------------
+      /* TAINT Trigger IDs may be ambiguous when several sub-FSMs have naemsake sub-FSMs themselves */
+      _new_tid() {
+        this._tid += +1;
+        return `${this.name}#${this._tid}`;
+      }
+
+      //---------------------------------------------------------------------------------------------------------
       _get_transitioner(tname, from_and_to_lstates = null) {
         /* TAINT too much logic to be done at in run time, try to precompile more */
         var $key, transitioner;
         $key = '^trigger';
         return transitioner = (...P) => {
           /* TAINT use single transitioner method for all triggers? */
-          var base, base1, base2, base3, base4, base5, base6, base7, base8, changed, from_lstate, to_lstate, trigger;
+          var base, base1, base2, base3, base4, base5, base6, base7, base8, changed, from_lstate, id, to_lstate, trigger;
           from_lstate = this.lstate;
+          id = this._new_tid();
           //-------------------------------------------------------------------------------------------------
           if (from_and_to_lstates != null) {
             if ((to_lstate = from_and_to_lstates[this.lstate]) == null) {
               trigger = freeze({
                 $key,
+                id,
                 failed: true,
                 from: from_lstate,
                 via: tname
@@ -208,6 +218,7 @@
           changed = to_lstate !== from_lstate;
           trigger = freeze({
             $key,
+            id,
             from: from_lstate,
             via: tname,
             to: to_lstate,
