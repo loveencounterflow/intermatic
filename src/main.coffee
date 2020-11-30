@@ -70,10 +70,10 @@ class Intermatic
 
     # validate.fsmd fsmd
     @_covered_names = new Set()
-    @reserved       = freeze [ 'void', 'start', 'stop', 'goto', 'change', 'fail', ]
+    # @reserved       = freeze [ 'void', 'start', 'stop', 'goto', 'change', 'fail', ]
     @fsmd           = { fsmd..., }
     @triggers       = {}
-    @subfsm_names   = []
+    @fsm_names  = []
     @has_subfsms    = false
     @_lstate        = 'void'
     # @states         = {}
@@ -107,8 +107,11 @@ class Intermatic
       get: ->
         return @lstate unless @has_subfsms
         R = { _: @lstate, }
-        R[ subfsm_name ] = @[ subfsm_name ].cstate for subfsm_name in @subfsm_names
+        R[ subfsm_name ] = @[ subfsm_name ].cstate for subfsm_name in @fsm_names
         return freeze R
+    #-------------------------------------------------------------------------------------------------------
+    fsms:
+      get: -> ( @[ subfsm_name ] for subfsm_name in @fsm_names )
 
   #---------------------------------------------------------------------------------------------------------
   fail: ( trigger ) ->
@@ -120,14 +123,12 @@ class Intermatic
     return null unless ( cyclers = @fsmd.cyclers )?
     #.......................................................................................................
     for tname, lstates of cyclers
-      debug '^33398^', lstates
       for cur_lstate, cur_idx in lstates
         nxt_idx     = ( cur_idx + 1 ) %% lstates.length
         nxt_lstate  = lstates[ nxt_idx ]
         triggers.push [ cur_lstate, tname, nxt_lstate, ]
     #.......................................................................................................
     freeze @fsmd
-    debug '^222233^', @fsmd
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -241,19 +242,19 @@ class Intermatic
 
   #---------------------------------------------------------------------------------------------------------
   _compile_subfsms: ->
-    @_covered_names.add 'subs'
-    subfsm_names = []
-    for sub_fname, sub_fsmd of @fsmd.subs ? {}
+    @_covered_names.add 'fsms'
+    fsm_names = []
+    for sub_fname, sub_fsmd of @fsmd.fsms ? {}
       sub_fsmd  = { sub_fsmd..., }
       if sub_fsmd.name? and sub_fsmd.name isnt sub_fname
         throw new Error "^interstate/_compile_subfsms@506^ name mismatch, got #{rpr sub_fname}, #{rpr sub_fsmd.name}"
       sub_fsmd.name = sub_fname
       set sub_fsmd, 'up', @
       @_covered_names.add sub_fname
-      subfsm_names.push   sub_fname
+      fsm_names.push   sub_fname
       set @, sub_fname, new @constructor sub_fsmd
-    @subfsm_names = freeze subfsm_names
-    @has_subfsms  = subfsm_names.length > 0
+    @fsm_names    = freeze fsm_names
+    @has_subfsms  = fsm_names.length > 0
     return null
 
   #---------------------------------------------------------------------------------------------------------
