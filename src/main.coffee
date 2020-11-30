@@ -154,7 +154,7 @@ class Intermatic
     return null
 
   #---------------------------------------------------------------------------------------------------------
-  _new_tid: -> tid = @constructor._tid++; return "t#{tid}"
+  _new_tid: -> tid = ++@constructor._tid; return "t#{tid}"
 
   #---------------------------------------------------------------------------------------------------------
   _get_transitioner: ( tname, from_and_to_lstates = null ) ->
