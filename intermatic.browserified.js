@@ -94,7 +94,7 @@
         // @reserved       = freeze [ 'void', 'start', 'stop', 'goto', 'change', 'fail', ]
         this.fsmd = {...fsmd};
         this.triggers = {};
-        this.sub_fsm_names = [];
+        this.fsm_names = [];
         this.has_subfsms = false;
         this._lstate = 'void';
         // @states         = {}
@@ -347,9 +347,9 @@
 
       //---------------------------------------------------------------------------------------------------------
       _compile_subfsms() {
-        var ref, ref1, sub_fname, sub_fsm_names, sub_fsmd;
+        var fsm_names, ref, ref1, sub_fname, sub_fsmd;
         this._covered_names.add('fsms');
-        sub_fsm_names = [];
+        fsm_names = [];
         ref1 = (ref = this.fsmd.fsms) != null ? ref : {};
         for (sub_fname in ref1) {
           sub_fsmd = ref1[sub_fname];
@@ -360,11 +360,11 @@
           sub_fsmd.name = sub_fname;
           set(sub_fsmd, 'up', this);
           this._covered_names.add(sub_fname);
-          sub_fsm_names.push(sub_fname);
+          fsm_names.push(sub_fname);
           set(this, sub_fname, new this.constructor(sub_fsmd));
         }
-        this.sub_fsm_names = freeze(sub_fsm_names);
-        this.has_subfsms = sub_fsm_names.length > 0;
+        this.fsm_names = freeze(fsm_names);
+        this.has_subfsms = fsm_names.length > 0;
         return null;
       }
 
@@ -411,7 +411,7 @@
           R = {
             _: this.lstate
           };
-          ref = this.sub_fsm_names;
+          ref = this.fsm_names;
           for (i = 0, len = ref.length; i < len; i++) {
             subfsm_name = ref[i];
             R[subfsm_name] = this[subfsm_name].cstate;
@@ -423,7 +423,7 @@
       fsms: {
         get: function() {
           var i, len, ref, results, subfsm_name;
-          ref = this.sub_fsm_names;
+          ref = this.fsm_names;
           results = [];
           for (i = 0, len = ref.length; i < len; i++) {
             subfsm_name = ref[i];
