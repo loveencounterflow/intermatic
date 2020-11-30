@@ -94,6 +94,7 @@
         // @reserved       = freeze [ 'void', 'start', 'stop', 'goto', 'change', 'fail', ]
         this.fsmd = {...fsmd};
         this.triggers = {};
+        this.lstates = null;
         this.fsm_names = [];
         this.has_subfsms = false;
         this._lstate = 'void';
@@ -109,6 +110,8 @@
         this._compile_transitioners();
         this._compile_handlers();
         this._compile_goto();
+        this._compile_can();
+        this._compile_tryto();
         this._compile_subfsms();
         this._copy_other_attributes();
         delete this._covered_names;
@@ -199,6 +202,7 @@
           }
         }
         //.......................................................................................................
+        this.lstates = freeze([...lstates]);
         return null;
       }
 
@@ -331,17 +335,66 @@
 
       //---------------------------------------------------------------------------------------------------------
       _compile_goto() {
-        var goto, transitioner;
+        var goto, i, len, ref, to_lstate, transitioner;
         this._covered_names.add('goto');
         if ((goto = this.fsmd.goto) != null) {
           if (goto !== '*') {
             throw new Error(`^interstate/_compile_handlers@776^ expected '*' for key \`goto\`, got ${rpr(goto)}`);
           }
           transitioner = this._get_transitioner('goto', null);
-          set(this, 'goto', (to_lstate) => {
-            return transitioner(to_lstate);
-          });
+          goto = (to_lstate, ...P) => {
+            return transitioner(to_lstate, ...P);
+          };
+          ref = this.lstates;
+          for (i = 0, len = ref.length; i < len; i++) {
+            to_lstate = ref[i];
+            goto[to_lstate] = (...P) => {
+              return transitioner(to_lstate, ...P);
+            };
+          }
+          set(this, 'goto', goto);
         }
+        return null;
+      }
+
+      //---------------------------------------------------------------------------------------------------------
+      _compile_can() {
+        var can, tname;
+        this._covered_names.add('can');
+        can = (tname) => {
+          var trigger;
+          if ((trigger = this.triggers[tname]) == null) {
+            throw new Error(`^interstate/can@822^ unknown trigger ${rpr(tname)}`);
+          }
+          return trigger[this.lstate] != null;
+        };
+        for (tname in this.triggers) {
+          can[tname] = (...P) => {
+            return can(tname, ...P);
+          };
+        }
+        set(this, 'can', can);
+        return null;
+      }
+
+      //---------------------------------------------------------------------------------------------------------
+      _compile_tryto() {
+        var tname, tryto;
+        this._covered_names.add('tryto');
+        tryto = (tname, ...P) => {
+          if (!this.can(tname)) {
+            return false;
+          }
+          /* TAINT we will possibly want to return some kind of result from trigger */
+          this[tname](...P);
+          return true;
+        };
+        for (tname in this.triggers) {
+          tryto[tname] = (...P) => {
+            return tryto(tname, ...P);
+          };
+        }
+        set(this, 'tryto', tryto);
         return null;
       }
 
