@@ -67,7 +67,6 @@ class Intermatic
   #---------------------------------------------------------------------------------------------------------
   # constructor: ( fname, fsmd ) ->
   constructor: ( fsmd ) ->
-
     # validate.fsmd fsmd
     @_covered_names = new Set()
     # @reserved       = freeze [ 'void', 'start', 'stop', 'goto', 'change', 'fail', ]
@@ -118,7 +117,7 @@ class Intermatic
 
   #---------------------------------------------------------------------------------------------------------
   fail: ( trigger ) ->
-    throw new Error "^interstate/fail@556^ trigger not allowed: #{rpr trigger}"
+    throw new Error "^interstate/fail@556^ trigger not allowed: (#{rpr @name}) #{rpr trigger}"
 
   #---------------------------------------------------------------------------------------------------------
   _compile_cyclers: ->
@@ -198,16 +197,23 @@ class Intermatic
       changed     = to_lstate isnt from_lstate
       trigger     = freeze { $key, id, from: from_lstate, via: tname, to: to_lstate, changed, }
       ### TAINT add extra arguments P ###
-      @before.trigger?          trigger
+      @before.any?              trigger
       @before.change?           trigger if changed
       @before[ tname        ]?  trigger
+      @leave.any?               trigger if changed
       @leave[  from_lstate  ]?  trigger if changed
-      @lstate     = to_lstate if changed
+      @lstate = to_lstate if changed
+      @stay.any?                trigger if not changed
       @stay[   to_lstate    ]?  trigger if not changed
+      @enter.any?               trigger if changed
       @enter[  to_lstate    ]?  trigger if changed
       @after[  tname        ]?  trigger
       @after.change?            trigger if changed
-      @after.trigger?           trigger
+      @after.any?               trigger
+      # if @up?.after.cchange?
+      #   debug '^3338398^', @up?.after.cchange, trigger
+      #   @up.after.cchange trigger
+      # @up?.after.cchange?       trigger if changed
       return null
 
   #---------------------------------------------------------------------------------------------------------
