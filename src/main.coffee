@@ -42,6 +42,10 @@ class Intermatic
     @stay               = {}
     @leave              = {}
     @after              = {}
+    @data               = {}
+    @history_length     = 3
+    @_prv_lstates       = []
+    @_prv_vias          = []
     @up                 = null
     @_path              = null
     @_compile_fail()
@@ -53,6 +57,7 @@ class Intermatic
     @_compile_can()
     @_compile_tryto()
     @_compile_subfsms()
+    @_compile_data()
     @_copy_other_attributes()
     delete @_tmp
     return null
@@ -65,14 +70,32 @@ class Intermatic
       set: ( lstate ) ->
         if typeof lstate isnt 'string'
           throw new Error "^interstate/set/lstate@501^ lstate name must be text, got #{rpr lstate}"
-        @_lstate = lstate
+        _prv_lstates  = [ @_prv_lstates..., lstate, ]
+        _prv_lstates.shift() while _prv_lstates.length > @history_length
+        @_prv_lstates = freeze _prv_lstates
+        @_lstate      = lstate
     #-------------------------------------------------------------------------------------------------------
     cstate:
       get: ->
-        return @lstate unless @has_subfsms
-        R = { _: @lstate, }
+        R =
+          _prv_lstates: @_prv_lstates ### !!!!!!!!!!!!! ###
+          lstate:   @lstate
+          path:     @path
+          from:     @from
+          via:      @via
+          to:       @to
+          data:     @data
         R[ subfsm_name ] = @[ subfsm_name ].cstate for subfsm_name in @fsm_names
         return freeze R
+    #-------------------------------------------------------------------------------------------------------
+    from:
+      get: -> @_prv_lstates[ @_prv_lstates.length - 1 ] ? null
+    #-------------------------------------------------------------------------------------------------------
+    via:
+      get: -> @_prv_vias[ @_prv_vias.length - 1 ] ? null
+    #-------------------------------------------------------------------------------------------------------
+    to:
+      get: -> '???'
     #-------------------------------------------------------------------------------------------------------
     fsms:
       get: -> ( @[ subfsm_name ] for subfsm_name in @fsm_names )
@@ -155,7 +178,7 @@ class Intermatic
   #---------------------------------------------------------------------------------------------------------
   _get_transitioner: ( tname, from_and_to_lstates = null ) ->
     ### TAINT too much logic to be done at in run time, try to precompile more ###
-    $key = '^trigger'
+    # $key = '^trigger'
     return transitioner = ( P... ) =>
       ### TAINT use single transitioner method for all triggers? ###
       from_lstate = @lstate
@@ -163,13 +186,15 @@ class Intermatic
       #-------------------------------------------------------------------------------------------------
       if from_and_to_lstates?
         unless ( to_lstate = from_and_to_lstates[ @lstate ] )?
-          trigger = freeze { $key, id, failed: true, from: from_lstate, via: tname, }
+          trigger = freeze { id, failed: true, from: from_lstate, via: tname, }
           return @fail trigger
       else
         [ to_lstate, P..., ] = P
       #-------------------------------------------------------------------------------------------------
-      changed     = to_lstate isnt from_lstate
-      trigger     = freeze { $key, id, from: from_lstate, via: tname, to: to_lstate, changed, }
+      changed         = to_lstate isnt from_lstate
+      trigger         = { id, from: from_lstate, via: tname, to: to_lstate, changed, }
+      trigger.changed = true if changed
+      trigger         = freeze trigger
       ### TAINT add extra arguments P ###
       @before.any?              trigger
       @before.change?           trigger if changed
@@ -207,10 +232,14 @@ class Intermatic
   _compile_handlers: ->
     ### TAINT add handlers for trigger, change ###
     ### TAINT check names against reserved ###
-    for category in [ 'before', 'enter', 'stay', 'leave', 'after', ]
-      @_tmp.known_names.add category
-      for name, handler of @_tmp.fsmd[ category ] ? {}
-        @[ category ][ name ] = handler.bind @
+    try
+      for category in [ 'before', 'enter', 'stay', 'leave', 'after', ]
+        @_tmp.known_names.add category
+        for name, handler of @_tmp.fsmd[ category ] ? {}
+          @[ category ][ name ] = handler.bind @
+    catch error
+      error.message += " — Error occurred during @_compile_handlers with #{rpr { category, name, handler, }}"
+      throw error
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -266,6 +295,14 @@ class Intermatic
       set @, sub_fname, new @constructor sub_fsmd
     @fsm_names    = freeze fsm_names
     @has_subfsms  = fsm_names.length > 0
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _compile_data: ->
+    @_tmp.known_names.add 'data'
+    return null unless ( data = @_tmp.fsmd.data )?
+    for pname, propd of Object.getOwnPropertyDescriptors @_tmp.fsmd.data
+      Object.defineProperty @data, pname, propd
     return null
 
   #---------------------------------------------------------------------------------------------------------
