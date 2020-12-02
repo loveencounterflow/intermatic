@@ -87,6 +87,16 @@ class Intermatic
         R = { _: @lstate, }
         R[ subfsm_name ] = @[ subfsm_name ].cstate for subfsm_name in @fsm_names
         return freeze R
+    # #-------------------------------------------------------------------------------------------------------
+    # from:
+    #   get: -> @_prv_lstates[ @_prv_lstates.length - 1 ] ? null
+    # #-------------------------------------------------------------------------------------------------------
+    # via:
+    #   get: -> @_prv_vias[ @_prv_vias.length - 1 ] ? null
+    #   set:  ( trigger ) -> @
+    # #-------------------------------------------------------------------------------------------------------
+    # to:
+    #   get: -> '???'
     #-------------------------------------------------------------------------------------------------------
     fsms:
       get: -> ( @[ subfsm_name ] for subfsm_name in @fsm_names )
@@ -169,7 +179,6 @@ class Intermatic
   #---------------------------------------------------------------------------------------------------------
   _get_transitioner: ( tname, from_and_to_lstates = null ) ->
     ### TAINT too much logic to be done at in run time, try to precompile more ###
-    $key = '^trigger'
     return transitioner = ( P... ) =>
       ### TAINT use single transitioner method for all triggers? ###
       from_lstate = @lstate
@@ -177,13 +186,15 @@ class Intermatic
       #-------------------------------------------------------------------------------------------------
       if from_and_to_lstates?
         unless ( to_lstate = from_and_to_lstates[ @lstate ] )?
-          trigger = freeze { $key, id, failed: true, from: from_lstate, via: tname, }
+          trigger = freeze { id, failed: true, from: from_lstate, via: tname, }
           return @fail trigger
       else
         [ to_lstate, P..., ] = P
       #-------------------------------------------------------------------------------------------------
-      changed     = to_lstate isnt from_lstate
-      trigger     = freeze { $key, id, from: from_lstate, via: tname, to: to_lstate, changed, }
+      changed         = to_lstate isnt from_lstate
+      trigger         = { id, from: from_lstate, via: tname, to: to_lstate, }
+      trigger.changed = true if changed
+      trigger         = freeze trigger
       ### TAINT add extra arguments P ###
       @before.any?              trigger
       @before.change?           trigger if changed
