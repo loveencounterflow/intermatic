@@ -201,13 +201,13 @@ class Intermatic
       #-------------------------------------------------------------------------------------------------
       if destinations_by_departures?
         unless ( destination = destinations_by_departures[ departure ] )?
-          trigger = freeze { id, failed: true, from: departure, via: verb, }
+          trigger = freeze { id, failed: true, from: departure, verb, }
           return @fail trigger
       else
         [ destination, P..., ] = P
       #-------------------------------------------------------------------------------------------------
       changed         = destination isnt departure
-      trigger         = { id, from: departure, via: verb, to: destination, }
+      trigger         = { id, from: departure, verb, to: destination, }
       trigger.changed = true if changed
       trigger         = freeze trigger
       ### TAINT add extra arguments P ###
