@@ -44,6 +44,7 @@ class Intermatic
     @after          = {}
     @up             = null
     @_path          = null
+    @_compile_fail()
     @_compile_cyclers()
     @_compile_triggers()
     @_compile_transitioners()
@@ -85,6 +86,13 @@ class Intermatic
   #---------------------------------------------------------------------------------------------------------
   fail: ( trigger ) ->
     throw new Error "^interstate/fail@556^ trigger not allowed: (#{rpr @name}) #{rpr trigger}"
+
+  #---------------------------------------------------------------------------------------------------------
+  _compile_fail: ->
+    @_covered_names.add 'fail'
+    return null unless ( fail = @fsmd.fail )?
+    @fail = fail.bind @
+    return null
 
   #---------------------------------------------------------------------------------------------------------
   _compile_cyclers: ->
@@ -157,7 +165,6 @@ class Intermatic
       if from_and_to_lstates?
         unless ( to_lstate = from_and_to_lstates[ @lstate ] )?
           trigger = freeze { $key, id, failed: true, from: from_lstate, via: tname, }
-          return @fsmd.fail trigger if @fsmd.fail?
           return @fail trigger
       else
         [ to_lstate, P..., ] = P
