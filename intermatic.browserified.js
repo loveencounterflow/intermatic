@@ -52,8 +52,9 @@
       // constructor: ( fname, fsmd ) ->
       constructor(fsmd) {
         // validate.fsmd fsmd
-        this._covered_names = new Set();
-        this.fsmd = {...fsmd};
+        this._tmp = {};
+        this._tmp.fsmd = {...fsmd};
+        this._tmp.known_names = new Set();
         this.triggers = {};
         this.lstates = null;
         this.fsm_names = [];
@@ -76,8 +77,7 @@
         this._compile_tryto();
         this._compile_subfsms();
         this._copy_other_attributes();
-        delete this._covered_names;
-        // delete @fsmd
+        delete this._tmp;
         return null;
       }
 
@@ -89,8 +89,8 @@
       //---------------------------------------------------------------------------------------------------------
       _compile_fail() {
         var fail;
-        this._covered_names.add('fail');
-        if ((fail = this.fsmd.fail) == null) {
+        this._tmp.known_names.add('fail');
+        if ((fail = this._tmp.fsmd.fail) == null) {
           return null;
         }
         this.fail = fail.bind(this);
@@ -100,9 +100,9 @@
       //---------------------------------------------------------------------------------------------------------
       _compile_cyclers() {
         var cur_idx, cur_lstate, cyclers, i, len, lstates, nxt_idx, nxt_lstate, ref, tname, triggers;
-        this._covered_names.add('cyclers');
-        triggers = this.fsmd.triggers = [...((ref = this.fsmd.triggers) != null ? ref : [])];
-        if ((cyclers = this.fsmd.cyclers) == null) {
+        this._tmp.known_names.add('cyclers');
+        triggers = this._tmp.fsmd.triggers = [...((ref = this._tmp.fsmd.triggers) != null ? ref : [])];
+        if ((cyclers = this._tmp.fsmd.cyclers) == null) {
           return null;
         }
 //.......................................................................................................
@@ -116,7 +116,7 @@
           }
         }
         //.......................................................................................................
-        // freeze @fsmd
+        // freeze @_tmp.fsmd
         return null;
       }
 
@@ -130,7 +130,7 @@
         this.starts_with = null;
         starred = {};
         lstates = new Set(['void']);
-        triggers = this.fsmd.triggers/* already a copy at this point, see @_compile_cyclers */
+        triggers = this._tmp.fsmd.triggers/* already a copy at this point, see @_compile_cyclers */
         tnames = new Set((function() {
           var i, len, results;
           results = [];
@@ -289,18 +289,18 @@
       //---------------------------------------------------------------------------------------------------------
       _compile_transitioners() {
         var from_and_to_lstates, ref, tname;
-        this._covered_names.add('triggers');
+        this._tmp.known_names.add('triggers');
         ref = this.triggers;
         for (tname in ref) {
           from_and_to_lstates = ref[tname];
           ((tname, from_and_to_lstates) => {
             /* NOTE we *could* allow custom transitioners but that would only replicate behavior available
                    via `fsm.before[ tname ]()`, `fsm.after[ tname ]()`:
-                   transitioner = @fsmd[ tname ] ? @_get_transitioner tname, from_and_to_lstates */
+                   transitioner = @_tmp.fsmd[ tname ] ? @_get_transitioner tname, from_and_to_lstates */
             var transitioner;
             transitioner = this._get_transitioner(tname, from_and_to_lstates);
             set(this, tname, transitioner);
-            return this._covered_names.add(tname);
+            return this._tmp.known_names.add(tname);
           })(tname, from_and_to_lstates);
         }
         return null;
@@ -314,8 +314,8 @@
         /* TAINT check names against reserved */
         for (i = 0, len = ref.length; i < len; i++) {
           category = ref[i];
-          this._covered_names.add(category);
-          ref2 = (ref1 = this.fsmd[category]) != null ? ref1 : {};
+          this._tmp.known_names.add(category);
+          ref2 = (ref1 = this._tmp.fsmd[category]) != null ? ref1 : {};
           for (name in ref2) {
             handler = ref2[name];
             this[category][name] = handler.bind(this);
@@ -327,8 +327,8 @@
       //---------------------------------------------------------------------------------------------------------
       _compile_goto() {
         var goto, i, len, ref, to_lstate, transitioner;
-        this._covered_names.add('goto');
-        if ((goto = this.fsmd.goto) != null) {
+        this._tmp.known_names.add('goto');
+        if ((goto = this._tmp.fsmd.goto) != null) {
           if (goto !== '*') {
             throw new Error(`^interstate/_compile_handlers@776^ expected '*' for key \`goto\`, got ${rpr(goto)}`);
           }
@@ -351,7 +351,7 @@
       //---------------------------------------------------------------------------------------------------------
       _compile_can() {
         var can, tname;
-        this._covered_names.add('can');
+        this._tmp.known_names.add('can');
         can = (tname) => {
           var trigger;
           if ((trigger = this.triggers[tname]) == null) {
@@ -371,7 +371,7 @@
       //---------------------------------------------------------------------------------------------------------
       _compile_tryto() {
         var tname, tryto;
-        this._covered_names.add('tryto');
+        this._tmp.known_names.add('tryto');
         tryto = (tname, ...P) => {
           if (!this.can(tname)) {
             return false;
@@ -392,9 +392,9 @@
       //---------------------------------------------------------------------------------------------------------
       _compile_subfsms() {
         var fsm_names, ref, ref1, sub_fname, sub_fsmd;
-        this._covered_names.add('fsms');
+        this._tmp.known_names.add('fsms');
         fsm_names = [];
-        ref1 = (ref = this.fsmd.fsms) != null ? ref : {};
+        ref1 = (ref = this._tmp.fsmd.fsms) != null ? ref : {};
         for (sub_fname in ref1) {
           sub_fsmd = ref1[sub_fname];
           sub_fsmd = {...sub_fsmd};
@@ -403,7 +403,7 @@
           }
           sub_fsmd.name = sub_fname;
           set(sub_fsmd, 'up', this);
-          this._covered_names.add(sub_fname);
+          this._tmp.known_names.add(sub_fname);
           fsm_names.push(sub_fname);
           set(this, sub_fname, new this.constructor(sub_fsmd));
         }
@@ -415,10 +415,10 @@
       //---------------------------------------------------------------------------------------------------------
       _copy_other_attributes() {
         var pname, propd, ref;
-        ref = Object.getOwnPropertyDescriptors(this.fsmd);
+        ref = Object.getOwnPropertyDescriptors(this._tmp.fsmd);
         for (pname in ref) {
           propd = ref[pname];
-          if (this._covered_names.has(pname)) {
+          if (this._tmp.known_names.has(pname)) {
             continue;
           }
           Object.defineProperty(this, pname, propd);
