@@ -27,7 +27,6 @@ class Intermatic
   @_tid: 0
 
   #---------------------------------------------------------------------------------------------------------
-  # constructor: ( fname, fsmd ) ->
   constructor: ( fsmd ) ->
     # validate.fsmd fsmd
     @_tmp               = {}
