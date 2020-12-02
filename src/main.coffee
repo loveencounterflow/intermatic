@@ -52,8 +52,9 @@ class Intermatic
     @history_length     = 3
     @_prv_lstates       = []
     @_prv_verbs         = []
-    @_nxt_verb          = null
+    @_nxt_departure     = null
     @_nxt_destination   = null
+    @_nxt_verb          = null
     @up                 = null
     @_path              = null
     @_compile_fail()
@@ -85,33 +86,24 @@ class Intermatic
       get: ->
         R =
           _prv_lstates: @_prv_lstates ### !!!!!!!!!!!!! ###
-          lstate:   @lstate
-          path:     @path
-          from:     @from
-          via:      @via
-          to:       @to
-          data:     @data
+          lstate:       @lstate
+          path:         @path
+          departure:    @departure
+          verb:         @verb
+          destination:  @destination
+          ### TAINT should use frozen copy of data ###
+          data:         @data
         R[ subfsm_name ] = @[ subfsm_name ].cstate for subfsm_name in @fsm_names
         return freeze R
-    # #-------------------------------------------------------------------------------------------------------
-    # from:
-    #   get: -> @_prv_lstates[ @_prv_lstates.length - 1 ] ? null
-    # #-------------------------------------------------------------------------------------------------------
-    # via:
-    #   get: -> @_prv_verbs[ @_prv_verbs.length - 1 ] ? null
-    #   set:  ( trigger ) -> @
-    # #-------------------------------------------------------------------------------------------------------
-    # to:
-    #   get: -> '???'
     #-------------------------------------------------------------------------------------------------------
-    from:
-      get: -> @_prv_lstates[ @_prv_lstates.length - 1 ] ? null
+    departure:
+      get: -> @_nxt_departure
     #-------------------------------------------------------------------------------------------------------
-    via:
-      get: -> @_prv_verbs[ @_prv_verbs.length - 1 ] ? null
+    destination:
+      get: -> @_nxt_destination
     #-------------------------------------------------------------------------------------------------------
-    to:
-      get: -> '???'
+    verb:
+      get: -> @_nxt_verb
     #-------------------------------------------------------------------------------------------------------
     fsms:
       get: -> ( @[ subfsm_name ] for subfsm_name in @fsm_names )
@@ -196,18 +188,19 @@ class Intermatic
     ### TAINT too much logic to be done at in run time, try to precompile more ###
     return transitioner = ( P... ) =>
       ### TAINT use single transitioner method for all triggers? ###
-      departure   = @lstate
-      id          = @_new_tid()
+      @_nxt_departure = departure = @lstate
+      id              = @_new_tid()
       #-------------------------------------------------------------------------------------------------
       if destinations_by_departures?
-        unless ( destination = destinations_by_departures[ departure ] )?
-          trigger = freeze { id, failed: true, from: departure, verb, }
+        @_nxt_destination = destination = ( destinations_by_departures[ departure ] ? null )
+        unless destination?
+          trigger = freeze { id, failed: true, verb, departure, }
           return @fail trigger
       else
         [ destination, P..., ] = P
       #-------------------------------------------------------------------------------------------------
       changed         = destination isnt departure
-      trigger         = { id, from: departure, verb, to: destination, }
+      trigger         = { id, verb, departure, destination, }
       trigger.changed = true if changed
       trigger         = freeze trigger
       ### TAINT add extra arguments P ###
@@ -236,7 +229,7 @@ class Intermatic
     for verb, destinations_by_departures of @triggers
       do ( verb, destinations_by_departures ) =>
         ### NOTE we *could* allow custom transitioners but that would only replicate behavior available
-        via `fsm.before[ verb ]()`, `fsm.after[ verb ]()`:
+        thru `fsm.before[ verb ]()`, `fsm.after[ verb ]()`:
         transitioner = @_tmp.fsmd[ verb ] ? @_get_transitioner verb, destinations_by_departures ###
         transitioner = @_get_transitioner verb, destinations_by_departures
         set @, verb, transitioner
