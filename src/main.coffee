@@ -47,6 +47,12 @@ class Intermatic
     @stay               = {}
     @leave              = {}
     @after              = {}
+    @data               = {}
+    @history_length     = 3
+    @_prv_lstates       = []
+    @_prv_vias          = []
+    @_nxt_via           = null
+    @_nxt_destination   = null
     @up                 = null
     @_path              = null
     @_compile_fail()
@@ -58,6 +64,7 @@ class Intermatic
     @_compile_can()
     @_compile_tryto()
     @_compile_subfsms()
+    @_compile_data()
     @_copy_other_attributes()
     delete @_tmp
     return null
@@ -271,6 +278,14 @@ class Intermatic
       set @, sub_fname, new @constructor sub_fsmd
     @fsm_names    = freeze fsm_names
     @has_subfsms  = fsm_names.length > 0
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _compile_data: ->
+    @_tmp.known_names.add 'data'
+    return null unless ( data = @_tmp.fsmd.data )?
+    for pname, propd of Object.getOwnPropertyDescriptors @_tmp.fsmd.data
+      Object.defineProperty @data, pname, propd
     return null
 
   #---------------------------------------------------------------------------------------------------------
