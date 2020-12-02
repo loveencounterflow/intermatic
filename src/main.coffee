@@ -52,8 +52,8 @@ class Intermatic
     @history_length     = 3
     @_prv_lstates       = [ @_lstate, ]
     @_prv_verbs         = []
-    @_nxt_departure     = null
-    @_nxt_destination   = null
+    @_nxt_dpar          = null
+    @_nxt_dest          = null
     @_nxt_verb          = null
     @up                 = null
     @_path              = null
@@ -90,19 +90,19 @@ class Intermatic
           lstate:       @lstate
           path:         @path
           verb:         @verb
-          departure:    @departure
-          destination:  @destination
+          dpar:         @dpar
+          dest:         @dest
           changed:      '?'
           ### TAINT should use frozen copy of data ###
           data:         @data
         R[ subfsm_name ] = @[ subfsm_name ].cstate for subfsm_name in @fsm_names
         return freeze R
     #-------------------------------------------------------------------------------------------------------
-    departure:
-      get: -> @_nxt_departure
+    dpar:
+      get: -> @_nxt_dpar
     #-------------------------------------------------------------------------------------------------------
-    destination:
-      get: -> @_nxt_destination
+    dest:
+      get: -> @_nxt_dest
     #-------------------------------------------------------------------------------------------------------
     verb:
       get: -> @_nxt_verb
@@ -158,26 +158,26 @@ class Intermatic
       ### TAINT validate.list_of.list triplet ###
       ### TAINT validate.verb verb ###
       ### TAINT validate that free of collision ###
-      [ departure, verb, destination, ] = triplet
+      [ dpar, verb, dest, ] = triplet
       #.....................................................................................................
-      ### TAINT also validate that tuples [ departure, verb, ] unique ###
+      ### TAINT also validate that tuples [ dpar, verb, ] unique ###
       if verb is 'start'
         throw new Error "^interstate/fail@556^ duplica declaration of `start`: #{rpr triplet}" if has_start
         has_start     = true
-        @starts_with  = destination
+        @starts_with  = dest
       #.....................................................................................................
       ### Special-case starred triggers: ###
-      if departure is '*'
-        starred[ verb ] = destination
+      if dpar is '*'
+        starred[ verb ] = dest
         continue
       #.....................................................................................................
-      lstates.add departure
-      lstates.add destination
-      set ( @triggers[ verb ] ?= {} ), departure, destination
+      lstates.add dpar
+      lstates.add dest
+      set ( @triggers[ verb ] ?= {} ), dpar, dest
     #.......................................................................................................
-    for starred_name, destination of starred
-      for departure from lstates
-        set ( @triggers[ starred_name ] ?= {} ), departure, destination
+    for starred_name, dest of starred
+      for dpar from lstates
+        set ( @triggers[ starred_name ] ?= {} ), dpar, dest
     #.......................................................................................................
     @lstates = freeze [ lstates..., ]
     return null
@@ -194,19 +194,19 @@ class Intermatic
       @_nxt_verb      = verb
       ### TAINT consider to do this inside a property setter, as for `@lstate`: ###
       @_prv_verbs     = push_circular @_prv_verbs, verb, @history_length
-      @_nxt_departure = departure = @lstate
+      @_nxt_dpar = dpar = @lstate
       id              = @_new_tid()
       #-------------------------------------------------------------------------------------------------
       if destinations_by_departures?
-        @_nxt_destination = destination = ( destinations_by_departures[ departure ] ? null )
-        unless destination?
-          trigger = freeze { id, failed: true, verb, departure, }
+        @_nxt_dest = dest = ( destinations_by_departures[ dpar ] ? null )
+        unless dest?
+          trigger = freeze { id, failed: true, verb, dpar, }
           return @fail trigger
       else
-        [ destination, P..., ] = P
+        [ dest, P..., ] = P
       #.....................................................................................................
-      changed                   = destination isnt departure
-      trigger                   = { id, verb, departure, destination, }
+      changed                   = dest isnt dpar
+      trigger                   = { id, verb, dpar, dest, }
       trigger.changed           = true if changed
       trigger                   = freeze trigger
       #.....................................................................................................
@@ -215,14 +215,14 @@ class Intermatic
       @before[ verb ]?          trigger
       #.....................................................................................................
       @leave.any?               trigger if changed
-      @leave[ departure ]?      trigger if changed
+      @leave[ dpar ]?           trigger if changed
       #.....................................................................................................
-      @lstate = destination if changed
+      @lstate = dest if changed
       #.....................................................................................................
       @stay.any?                trigger if not changed
-      @stay[ destination ]?     trigger if not changed
+      @stay[ dest ]?            trigger if not changed
       @enter.any?               trigger if changed
-      @enter[ destination ]?    trigger if changed
+      @enter[ dest ]?           trigger if changed
       #.....................................................................................................
       @after[ verb ]?           trigger
       @after.change?            trigger if changed
@@ -230,8 +230,8 @@ class Intermatic
       #.....................................................................................................
       ### NOTE At this point, the transition has finished, so we reset the `@_nxt_*` attributes: ###
       @_nxt_verb                = null
-      @_nxt_destination         = null
-      @_nxt_departure           = null
+      @_nxt_dest                = null
+      @_nxt_dpar                = null
       #.....................................................................................................
       return null
 
@@ -269,9 +269,9 @@ class Intermatic
       unless goto is '*'
         throw new Error "^interstate/_compile_handlers@776^ expected '*' for key `goto`, got #{rpr goto}"
       transitioner = @_get_transitioner 'goto', null
-      goto = ( destination, P... ) => transitioner destination, P...
-      for destination in @lstates
-        goto[ destination ] = ( P... ) => transitioner destination, P...
+      goto = ( dest, P... ) => transitioner dest, P...
+      for dest in @lstates
+        goto[ dest ] = ( P... ) => transitioner dest, P...
       set @, 'goto', goto
     return null
 
