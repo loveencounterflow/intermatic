@@ -112,6 +112,8 @@ alpha_btn:
 * Unreachable states cause an error on instantiation unless licensed in the configuration (FSMD) by setting
   `unreachable: true`.
 
+* link: `( verb, departure, destination, )`, e.g. "`melt` from `solid` to `liquid`"
+
 * Multiple terminal states are not a problem.
 
 
