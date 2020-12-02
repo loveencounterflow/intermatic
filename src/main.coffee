@@ -50,7 +50,7 @@ class Intermatic
     @after              = {}
     @data               = {}
     @history_length     = 3
-    @_prv_lstates       = []
+    @_prv_lstates       = [ @_lstate, ]
     @_prv_verbs         = []
     @_nxt_departure     = null
     @_nxt_destination   = null
@@ -85,12 +85,14 @@ class Intermatic
     cstate:
       get: ->
         R =
+          _prv_verbs:   @_prv_verbs   ### !!!!!!!!!!!!! ###
           _prv_lstates: @_prv_lstates ### !!!!!!!!!!!!! ###
           lstate:       @lstate
           path:         @path
-          departure:    @departure
           verb:         @verb
+          departure:    @departure
           destination:  @destination
+          changed:      '?'
           ### TAINT should use frozen copy of data ###
           data:         @data
         R[ subfsm_name ] = @[ subfsm_name ].cstate for subfsm_name in @fsm_names
@@ -185,9 +187,13 @@ class Intermatic
 
   #---------------------------------------------------------------------------------------------------------
   _get_transitioner: ( verb, destinations_by_departures = null ) ->
+    ### TAINT add extra arguments P ###
     ### TAINT too much logic to be done at in run time, try to precompile more ###
     return transitioner = ( P... ) =>
       ### TAINT use single transitioner method for all triggers? ###
+      @_nxt_verb      = verb
+      ### TAINT consider to do this inside a property setter, as for `@lstate`: ###
+      @_prv_verbs     = push_circular @_prv_verbs, verb, @history_length
       @_nxt_departure = departure = @lstate
       id              = @_new_tid()
       #-------------------------------------------------------------------------------------------------
@@ -198,29 +204,35 @@ class Intermatic
           return @fail trigger
       else
         [ destination, P..., ] = P
-      #-------------------------------------------------------------------------------------------------
-      changed         = destination isnt departure
-      trigger         = { id, verb, departure, destination, }
-      trigger.changed = true if changed
-      trigger         = freeze trigger
-      ### TAINT add extra arguments P ###
+      #.....................................................................................................
+      changed                   = destination isnt departure
+      trigger                   = { id, verb, departure, destination, }
+      trigger.changed           = true if changed
+      trigger                   = freeze trigger
+      #.....................................................................................................
       @before.any?              trigger
       @before.change?           trigger if changed
-      @before[ verb        ]?  trigger
+      @before[ verb ]?          trigger
+      #.....................................................................................................
       @leave.any?               trigger if changed
-      @leave[  departure  ]?  trigger if changed
+      @leave[ departure ]?      trigger if changed
+      #.....................................................................................................
       @lstate = destination if changed
+      #.....................................................................................................
       @stay.any?                trigger if not changed
-      @stay[   destination    ]?  trigger if not changed
+      @stay[ destination ]?     trigger if not changed
       @enter.any?               trigger if changed
-      @enter[  destination    ]?  trigger if changed
-      @after[  verb        ]?  trigger
+      @enter[ destination ]?    trigger if changed
+      #.....................................................................................................
+      @after[ verb ]?           trigger
       @after.change?            trigger if changed
       @after.any?               trigger
-      # if @up?.after.cchange?
-      #   debug '^3338398^', @up?.after.cchange, trigger
-      #   @up.after.cchange trigger
-      # @up?.after.cchange?       trigger if changed
+      #.....................................................................................................
+      ### NOTE At this point, the transition has finished, so we reset the `@_nxt_*` attributes: ###
+      @_nxt_verb                = null
+      @_nxt_destination         = null
+      @_nxt_departure           = null
+      #.....................................................................................................
       return null
 
   #---------------------------------------------------------------------------------------------------------
