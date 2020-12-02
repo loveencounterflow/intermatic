@@ -64,6 +64,10 @@
         this.stay = {};
         this.leave = {};
         this.after = {};
+        this.data = {};
+        this.history_length = 3;
+        this._prv_lstates = [];
+        this._prv_vias = [];
         this.up = null;
         this._path = null;
         this._compile_fail();
@@ -75,6 +79,7 @@
         this._compile_can();
         this._compile_tryto();
         this._compile_subfsms();
+        this._compile_data();
         this._copy_other_attributes();
         delete this._tmp;
         return null;
@@ -189,9 +194,9 @@
 
       //---------------------------------------------------------------------------------------------------------
       _get_transitioner(tname, from_and_to_lstates = null) {
+        var transitioner;
         /* TAINT too much logic to be done at in run time, try to precompile more */
-        var $key, transitioner;
-        $key = '^trigger';
+        // $key = '^trigger'
         return transitioner = (...P) => {
           /* TAINT use single transitioner method for all triggers? */
           var base, base1, base10, base11, base2, base3, base4, base5, base6, base7, base8, base9, changed, from_lstate, id, to_lstate, trigger;
@@ -201,7 +206,6 @@
           if (from_and_to_lstates != null) {
             if ((to_lstate = from_and_to_lstates[this.lstate]) == null) {
               trigger = freeze({
-                $key,
                 id,
                 failed: true,
                 from: from_lstate,
@@ -214,14 +218,17 @@
           }
           //-------------------------------------------------------------------------------------------------
           changed = to_lstate !== from_lstate;
-          trigger = freeze({
-            $key,
+          trigger = {
             id,
             from: from_lstate,
             via: tname,
             to: to_lstate,
             changed
-          });
+          };
+          if (changed) {
+            trigger.changed = true;
+          }
+          trigger = freeze(trigger);
           if (typeof (base = this.before).any === "function") {
             base.any(trigger);
           }
@@ -307,18 +314,24 @@
 
       //---------------------------------------------------------------------------------------------------------
       _compile_handlers() {
-        var category, handler, i, len, name, ref, ref1, ref2;
-        ref = ['before', 'enter', 'stay', 'leave', 'after'];
-        /* TAINT add handlers for trigger, change */
-        /* TAINT check names against reserved */
-        for (i = 0, len = ref.length; i < len; i++) {
-          category = ref[i];
-          this._tmp.known_names.add(category);
-          ref2 = (ref1 = this._tmp.fsmd[category]) != null ? ref1 : {};
-          for (name in ref2) {
-            handler = ref2[name];
-            this[category][name] = handler.bind(this);
+        var category, error, handler, i, len, name, ref, ref1, ref2;
+        try {
+          ref = ['before', 'enter', 'stay', 'leave', 'after'];
+          /* TAINT add handlers for trigger, change */
+          /* TAINT check names against reserved */
+          for (i = 0, len = ref.length; i < len; i++) {
+            category = ref[i];
+            this._tmp.known_names.add(category);
+            ref2 = (ref1 = this._tmp.fsmd[category]) != null ? ref1 : {};
+            for (name in ref2) {
+              handler = ref2[name];
+              this[category][name] = handler.bind(this);
+            }
           }
+        } catch (error1) {
+          error = error1;
+          error.message += ` — Error occurred during @_compile_handlers with ${rpr({category, name, handler})}`;
+          throw error;
         }
         return null;
       }
@@ -412,6 +425,21 @@
       }
 
       //---------------------------------------------------------------------------------------------------------
+      _compile_data() {
+        var data, pname, propd, ref;
+        this._tmp.known_names.add('data');
+        if ((data = this._tmp.fsmd.data) == null) {
+          return null;
+        }
+        ref = Object.getOwnPropertyDescriptors(this._tmp.fsmd.data);
+        for (pname in ref) {
+          propd = ref[pname];
+          Object.defineProperty(this.data, pname, propd);
+        }
+        return null;
+      }
+
+      //---------------------------------------------------------------------------------------------------------
       _copy_other_attributes() {
         var pname, propd, ref;
         ref = Object.getOwnPropertyDescriptors(this._tmp.fsmd);
@@ -438,9 +466,15 @@
           return this._lstate;
         },
         set: function(lstate) {
+          var _prv_lstates;
           if (typeof lstate !== 'string') {
             throw new Error(`^interstate/set/lstate@501^ lstate name must be text, got ${rpr(lstate)}`);
           }
+          _prv_lstates = [...this._prv_lstates, lstate];
+          while (_prv_lstates.length > this.history_length) {
+            _prv_lstates.shift();
+          }
+          this._prv_lstates = freeze(_prv_lstates);
           return this._lstate = lstate;
         }
       },
@@ -448,11 +482,14 @@
       cstate: {
         get: function() {
           var R, i, len, ref, subfsm_name;
-          if (!this.has_subfsms) {
-            return this.lstate;
-          }
           R = {
-            _: this.lstate
+            _prv_lstates: this._prv_lstates/* !!!!!!!!!!!!! */,
+            lstate: this.lstate,
+            path: this.path,
+            from: this.from,
+            via: this.via,
+            to: this.to,
+            data: this.data
           };
           ref = this.fsm_names;
           for (i = 0, len = ref.length; i < len; i++) {
@@ -460,6 +497,26 @@
             R[subfsm_name] = this[subfsm_name].cstate;
           }
           return freeze(R);
+        }
+      },
+      //-------------------------------------------------------------------------------------------------------
+      from: {
+        get: function() {
+          var ref;
+          return (ref = this._prv_lstates[this._prv_lstates.length - 1]) != null ? ref : null;
+        }
+      },
+      //-------------------------------------------------------------------------------------------------------
+      via: {
+        get: function() {
+          var ref;
+          return (ref = this._prv_vias[this._prv_vias.length - 1]) != null ? ref : null;
+        }
+      },
+      //-------------------------------------------------------------------------------------------------------
+      to: {
+        get: function() {
+          return '???';
         }
       },
       //-------------------------------------------------------------------------------------------------------
