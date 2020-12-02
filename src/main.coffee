@@ -49,7 +49,7 @@ class Intermatic
     @leave              = {}
     @after              = {}
     @data               = {}
-    @history_length     = 3
+    @history_length     = 1
     @_prv_lstates       = [ @_lstate, ]
     @_prv_verbs         = []
     @_nxt_dpar          = null
@@ -79,14 +79,14 @@ class Intermatic
       set: ( lstate ) ->
         if typeof lstate isnt 'string'
           throw new Error "^interstate/set/lstate@501^ lstate name must be text, got #{rpr lstate}"
-        @_prv_lstates = push_circular @_prv_lstates, lstate, @history_length
+        @_prv_lstates = push_circular @_prv_lstates, lstate, @history_length + 1
         @_lstate      = lstate
     #-------------------------------------------------------------------------------------------------------
     cstate:
       get: ->
         R =
-          _prv_verbs:   @_prv_verbs   ### !!!!!!!!!!!!! ###
-          _prv_lstates: @_prv_lstates ### !!!!!!!!!!!!! ###
+          # _prv_verbs:   @_prv_verbs   ### !!!!!!!!!!!!! ###
+          # _prv_lstates: @_prv_lstates ### !!!!!!!!!!!!! ###
           lstate:       @lstate
           path:         @path
           verb:         @verb
@@ -114,6 +114,15 @@ class Intermatic
       get: ->
         return R if ( R = @_path )?
         return @_path = if @up? then "#{@up.path}/#{@name}" else @name
+    #-------------------------------------------------------------------------------------------------------
+    history:
+      get: ->
+        R = []
+        for verb, idx in @_prv_verbs
+          dpar  = @_prv_lstates[ idx ]
+          dest  = @_prv_lstates[ idx + 1 ]
+          R.push freeze { verb, dpar, dest, }
+        return freeze R
 
   #---------------------------------------------------------------------------------------------------------
   fail: ( trigger ) ->
