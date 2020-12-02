@@ -18,10 +18,11 @@ set = ( target, key, value ) ->
   return value
 
 #-----------------------------------------------------------------------------------------------------------
-push_circular = ( max_length, xs, x, ) ->
+push_circular = ( xs, x, max_length = 1 ) ->
   R = [ xs..., x, ]
-  R.shift() while xs.length > max_length
+  R.shift() while R.length > max_length
   return freeze R
+
 
 #===========================================================================================================
 #
@@ -77,7 +78,8 @@ class Intermatic
       set: ( lstate ) ->
         if typeof lstate isnt 'string'
           throw new Error "^interstate/set/lstate@501^ lstate name must be text, got #{rpr lstate}"
-        @_lstate = lstate
+        @_prv_lstates = push_circular @_prv_lstates, lstate, @history_length
+        @_lstate      = lstate
     #-------------------------------------------------------------------------------------------------------
     cstate:
       get: ->
