@@ -21,5 +21,7 @@
   "bugs": {
     "url": "https://github.com/loveencounterflow/intermatic/issues"
   },
-  "homepage": "https://github.com/loveencounterflow/intermatic#readme"
+  "homepage": "https://github.com/loveencounterflow/intermatic#readme",
+  "dependencies": {
+  }
 }
