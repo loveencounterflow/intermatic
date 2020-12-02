@@ -66,6 +66,7 @@
         this.after = {};
         this.up = null;
         this._path = null;
+        this._compile_fail();
         this._compile_cyclers();
         this._compile_triggers();
         this._compile_transitioners();
@@ -83,6 +84,17 @@
       //---------------------------------------------------------------------------------------------------------
       fail(trigger) {
         throw new Error(`^interstate/fail@556^ trigger not allowed: (${rpr(this.name)}) ${rpr(trigger)}`);
+      }
+
+      //---------------------------------------------------------------------------------------------------------
+      _compile_fail() {
+        var fail;
+        this._covered_names.add('fail');
+        if ((fail = this.fsmd.fail) == null) {
+          return null;
+        }
+        this.fail = fail.bind(this);
+        return null;
       }
 
       //---------------------------------------------------------------------------------------------------------
@@ -196,9 +208,6 @@
                 from: from_lstate,
                 via: tname
               });
-              if (this.fsmd.fail != null) {
-                return this.fsmd.fail(trigger);
-              }
               return this.fail(trigger);
             }
           } else {
