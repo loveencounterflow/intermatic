@@ -18,7 +18,7 @@
 },{"./main.js":2}],2:[function(require,module,exports){
 (function() {
   'use strict';
-  var Intermatic, debug, freeze, rpr, set,
+  var Intermatic, debug, freeze, push_circular, rpr, set,
     modulo = function(a, b) { return (+a % (b = +b) + b) % b; };
 
   //###########################################################################################################
@@ -43,6 +43,16 @@
     return value;
   };
 
+  //-----------------------------------------------------------------------------------------------------------
+  push_circular = function(xs, x, max_length = 1) {
+    var R;
+    R = [...xs, x];
+    while (R.length > max_length) {
+      R.shift();
+    }
+    return freeze(R);
+  };
+
   Intermatic = (function() {
     //===========================================================================================================
 
@@ -64,6 +74,12 @@
         this.stay = {};
         this.leave = {};
         this.after = {};
+        this.data = {};
+        this.history_length = 3;
+        this._prv_lstates = [];
+        this._prv_vias = [];
+        this._nxt_via = null;
+        this._nxt_destination = null;
         this.up = null;
         this._path = null;
         this._compile_fail();
@@ -75,6 +91,7 @@
         this._compile_can();
         this._compile_tryto();
         this._compile_subfsms();
+        this._compile_data();
         this._copy_other_attributes();
         delete this._tmp;
         return null;
@@ -190,8 +207,7 @@
       //---------------------------------------------------------------------------------------------------------
       _get_transitioner(tname, from_and_to_lstates = null) {
         /* TAINT too much logic to be done at in run time, try to precompile more */
-        var $key, transitioner;
-        $key = '^trigger';
+        var transitioner;
         return transitioner = (...P) => {
           /* TAINT use single transitioner method for all triggers? */
           var base, base1, base10, base11, base2, base3, base4, base5, base6, base7, base8, base9, changed, from_lstate, id, to_lstate, trigger;
@@ -201,7 +217,6 @@
           if (from_and_to_lstates != null) {
             if ((to_lstate = from_and_to_lstates[this.lstate]) == null) {
               trigger = freeze({
-                $key,
                 id,
                 failed: true,
                 from: from_lstate,
@@ -214,14 +229,16 @@
           }
           //-------------------------------------------------------------------------------------------------
           changed = to_lstate !== from_lstate;
-          trigger = freeze({
-            $key,
+          trigger = {
             id,
             from: from_lstate,
             via: tname,
-            to: to_lstate,
-            changed
-          });
+            to: to_lstate
+          };
+          if (changed) {
+            trigger.changed = true;
+          }
+          trigger = freeze(trigger);
           if (typeof (base = this.before).any === "function") {
             base.any(trigger);
           }
@@ -412,6 +429,21 @@
       }
 
       //---------------------------------------------------------------------------------------------------------
+      _compile_data() {
+        var data, pname, propd, ref;
+        this._tmp.known_names.add('data');
+        if ((data = this._tmp.fsmd.data) == null) {
+          return null;
+        }
+        ref = Object.getOwnPropertyDescriptors(this._tmp.fsmd.data);
+        for (pname in ref) {
+          propd = ref[pname];
+          Object.defineProperty(this.data, pname, propd);
+        }
+        return null;
+      }
+
+      //---------------------------------------------------------------------------------------------------------
       _copy_other_attributes() {
         var pname, propd, ref;
         ref = Object.getOwnPropertyDescriptors(this._tmp.fsmd);
@@ -441,6 +473,7 @@
           if (typeof lstate !== 'string') {
             throw new Error(`^interstate/set/lstate@501^ lstate name must be text, got ${rpr(lstate)}`);
           }
+          this._prv_lstates = push_circular(this._prv_lstates, lstate, this.history_length);
           return this._lstate = lstate;
         }
       },
@@ -462,6 +495,16 @@
           return freeze(R);
         }
       },
+      // #-------------------------------------------------------------------------------------------------------
+      // from:
+      //   get: -> @_prv_lstates[ @_prv_lstates.length - 1 ] ? null
+      // #-------------------------------------------------------------------------------------------------------
+      // via:
+      //   get: -> @_prv_vias[ @_prv_vias.length - 1 ] ? null
+      //   set:  ( trigger ) -> @
+      // #-------------------------------------------------------------------------------------------------------
+      // to:
+      //   get: -> '???'
       //-------------------------------------------------------------------------------------------------------
       fsms: {
         get: function() {
