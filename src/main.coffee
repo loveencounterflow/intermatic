@@ -17,6 +17,12 @@ set = ( target, key, value ) ->
   target[ key ] = value
   return value
 
+#-----------------------------------------------------------------------------------------------------------
+push_circular = ( xs, x, max_length = 1 ) ->
+  R = [ xs..., x, ]
+  R.shift() while R.length > max_length
+  return freeze R
+
 
 #===========================================================================================================
 #
@@ -46,6 +52,8 @@ class Intermatic
     @history_length     = 3
     @_prv_lstates       = []
     @_prv_vias          = []
+    @_nxt_via           = null
+    @_nxt_destination   = null
     @up                 = null
     @_path              = null
     @_compile_fail()
@@ -70,9 +78,7 @@ class Intermatic
       set: ( lstate ) ->
         if typeof lstate isnt 'string'
           throw new Error "^interstate/set/lstate@501^ lstate name must be text, got #{rpr lstate}"
-        _prv_lstates  = [ @_prv_lstates..., lstate, ]
-        _prv_lstates.shift() while _prv_lstates.length > @history_length
-        @_prv_lstates = freeze _prv_lstates
+        @_prv_lstates = push_circular @_prv_lstates, lstate, @history_length
         @_lstate      = lstate
     #-------------------------------------------------------------------------------------------------------
     cstate:
@@ -87,6 +93,16 @@ class Intermatic
           data:     @data
         R[ subfsm_name ] = @[ subfsm_name ].cstate for subfsm_name in @fsm_names
         return freeze R
+    # #-------------------------------------------------------------------------------------------------------
+    # from:
+    #   get: -> @_prv_lstates[ @_prv_lstates.length - 1 ] ? null
+    # #-------------------------------------------------------------------------------------------------------
+    # via:
+    #   get: -> @_prv_vias[ @_prv_vias.length - 1 ] ? null
+    #   set:  ( trigger ) -> @
+    # #-------------------------------------------------------------------------------------------------------
+    # to:
+    #   get: -> '???'
     #-------------------------------------------------------------------------------------------------------
     from:
       get: -> @_prv_lstates[ @_prv_lstates.length - 1 ] ? null
@@ -178,7 +194,6 @@ class Intermatic
   #---------------------------------------------------------------------------------------------------------
   _get_transitioner: ( tname, from_and_to_lstates = null ) ->
     ### TAINT too much logic to be done at in run time, try to precompile more ###
-    # $key = '^trigger'
     return transitioner = ( P... ) =>
       ### TAINT use single transitioner method for all triggers? ###
       from_lstate = @lstate
@@ -192,7 +207,7 @@ class Intermatic
         [ to_lstate, P..., ] = P
       #-------------------------------------------------------------------------------------------------
       changed         = to_lstate isnt from_lstate
-      trigger         = { id, from: from_lstate, via: tname, to: to_lstate, changed, }
+      trigger         = { id, from: from_lstate, via: tname, to: to_lstate, }
       trigger.changed = true if changed
       trigger         = freeze trigger
       ### TAINT add extra arguments P ###
