@@ -112,7 +112,11 @@ alpha_btn:
 * Unreachable states cause an error on instantiation unless licensed in the configuration (FSMD) by setting
   `unreachable: true`.
 
-* link: `( verb, departure, destination, )`, e.g. "`melt` from `solid` to `liquid`"
+* A **move** (a.k.a. *transition*) is a triplet of `( verb, departure, destination, )` (think: "to `melt` (a
+  substance) means going from `solid` to `liquid` state", which describes the transition `( 'melt', 'solid',
+  'liquid', )`). A given verb may connect a number of departures and destinations, and a given verb may
+  connect several departures with several destinations; however, given a verb and a departure state, there
+  can only be up to one destination state.
 
 * Multiple terminal states are not a problem.
 
