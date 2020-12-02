@@ -30,20 +30,21 @@ class Intermatic
   # constructor: ( fname, fsmd ) ->
   constructor: ( fsmd ) ->
     # validate.fsmd fsmd
-    @_covered_names = new Set()
-    @fsmd           = { fsmd..., }
-    @triggers       = {}
-    @lstates        = null
-    @fsm_names      = []
-    @has_subfsms    = false
-    @_lstate        = 'void'
-    @before         = {}
-    @enter          = {}
-    @stay           = {}
-    @leave          = {}
-    @after          = {}
-    @up             = null
-    @_path          = null
+    @_tmp               = {}
+    @_tmp.fsmd          = { fsmd..., }
+    @_tmp.known_names   = new Set()
+    @triggers           = {}
+    @lstates            = null
+    @fsm_names          = []
+    @has_subfsms        = false
+    @_lstate            = 'void'
+    @before             = {}
+    @enter              = {}
+    @stay               = {}
+    @leave              = {}
+    @after              = {}
+    @up                 = null
+    @_path              = null
     @_compile_fail()
     @_compile_cyclers()
     @_compile_triggers()
@@ -54,8 +55,7 @@ class Intermatic
     @_compile_tryto()
     @_compile_subfsms()
     @_copy_other_attributes()
-    delete @_covered_names
-    # delete @fsmd
+    delete @_tmp
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -89,16 +89,16 @@ class Intermatic
 
   #---------------------------------------------------------------------------------------------------------
   _compile_fail: ->
-    @_covered_names.add 'fail'
-    return null unless ( fail = @fsmd.fail )?
+    @_tmp.known_names.add 'fail'
+    return null unless ( fail = @_tmp.fsmd.fail )?
     @fail = fail.bind @
     return null
 
   #---------------------------------------------------------------------------------------------------------
   _compile_cyclers: ->
-    @_covered_names.add 'cyclers'
-    triggers = @fsmd.triggers = [ ( @fsmd.triggers ? [] )..., ]
-    return null unless ( cyclers = @fsmd.cyclers )?
+    @_tmp.known_names.add 'cyclers'
+    triggers = @_tmp.fsmd.triggers = [ ( @_tmp.fsmd.triggers ? [] )..., ]
+    return null unless ( cyclers = @_tmp.fsmd.cyclers )?
     #.......................................................................................................
     for tname, lstates of cyclers
       for cur_lstate, cur_idx in lstates
@@ -106,7 +106,7 @@ class Intermatic
         nxt_lstate  = lstates[ nxt_idx ]
         triggers.push [ cur_lstate, tname, nxt_lstate, ]
     #.......................................................................................................
-    # freeze @fsmd
+    # freeze @_tmp.fsmd
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -115,7 +115,7 @@ class Intermatic
     @starts_with  = null
     starred       = {}
     lstates       = new Set [ 'void', ]
-    triggers      = @fsmd.triggers ### already a copy at this point, see @_compile_cyclers ###
+    triggers      = @_tmp.fsmd.triggers ### already a copy at this point, see @_compile_cyclers ###
     tnames        = new Set ( t[ 1 ] for t in triggers )
     #.......................................................................................................
     unless tnames.has 'start'
@@ -193,15 +193,15 @@ class Intermatic
 
   #---------------------------------------------------------------------------------------------------------
   _compile_transitioners: ->
-    @_covered_names.add 'triggers'
+    @_tmp.known_names.add 'triggers'
     for tname, from_and_to_lstates of @triggers
       do ( tname, from_and_to_lstates ) =>
         ### NOTE we *could* allow custom transitioners but that would only replicate behavior available
         via `fsm.before[ tname ]()`, `fsm.after[ tname ]()`:
-        transitioner = @fsmd[ tname ] ? @_get_transitioner tname, from_and_to_lstates ###
+        transitioner = @_tmp.fsmd[ tname ] ? @_get_transitioner tname, from_and_to_lstates ###
         transitioner = @_get_transitioner tname, from_and_to_lstates
         set @, tname, transitioner
-        @_covered_names.add tname
+        @_tmp.known_names.add tname
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -209,15 +209,15 @@ class Intermatic
     ### TAINT add handlers for trigger, change ###
     ### TAINT check names against reserved ###
     for category in [ 'before', 'enter', 'stay', 'leave', 'after', ]
-      @_covered_names.add category
-      for name, handler of @fsmd[ category ] ? {}
+      @_tmp.known_names.add category
+      for name, handler of @_tmp.fsmd[ category ] ? {}
         @[ category ][ name ] = handler.bind @
     return null
 
   #---------------------------------------------------------------------------------------------------------
   _compile_goto: ->
-    @_covered_names.add 'goto'
-    if ( goto = @fsmd.goto )?
+    @_tmp.known_names.add 'goto'
+    if ( goto = @_tmp.fsmd.goto )?
       unless goto is '*'
         throw new Error "^interstate/_compile_handlers@776^ expected '*' for key `goto`, got #{rpr goto}"
       transitioner = @_get_transitioner 'goto', null
@@ -229,7 +229,7 @@ class Intermatic
 
   #---------------------------------------------------------------------------------------------------------
   _compile_can: ->
-    @_covered_names.add 'can'
+    @_tmp.known_names.add 'can'
     can = ( tname ) =>
       unless ( trigger = @triggers[ tname ] )?
         throw new Error "^interstate/can@822^ unknown trigger #{rpr tname}"
@@ -241,7 +241,7 @@ class Intermatic
 
   #---------------------------------------------------------------------------------------------------------
   _compile_tryto: ->
-    @_covered_names.add 'tryto'
+    @_tmp.known_names.add 'tryto'
     tryto = ( tname, P... ) =>
       return false unless @can tname
       ### TAINT we will possibly want to return some kind of result from trigger ###
@@ -254,15 +254,15 @@ class Intermatic
 
   #---------------------------------------------------------------------------------------------------------
   _compile_subfsms: ->
-    @_covered_names.add 'fsms'
+    @_tmp.known_names.add 'fsms'
     fsm_names = []
-    for sub_fname, sub_fsmd of @fsmd.fsms ? {}
+    for sub_fname, sub_fsmd of @_tmp.fsmd.fsms ? {}
       sub_fsmd  = { sub_fsmd..., }
       if sub_fsmd.name? and sub_fsmd.name isnt sub_fname
         throw new Error "^interstate/_compile_subfsms@506^ name mismatch, got #{rpr sub_fname}, #{rpr sub_fsmd.name}"
       sub_fsmd.name = sub_fname
       set sub_fsmd, 'up', @
-      @_covered_names.add sub_fname
+      @_tmp.known_names.add sub_fname
       fsm_names.push   sub_fname
       set @, sub_fname, new @constructor sub_fsmd
     @fsm_names    = freeze fsm_names
@@ -271,8 +271,8 @@ class Intermatic
 
   #---------------------------------------------------------------------------------------------------------
   _copy_other_attributes: ->
-    for pname, propd of Object.getOwnPropertyDescriptors @fsmd
-      continue if @_covered_names.has pname
+    for pname, propd of Object.getOwnPropertyDescriptors @_tmp.fsmd
+      continue if @_tmp.known_names.has pname
       Object.defineProperty @, pname, propd
     return null
 
