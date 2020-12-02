@@ -2,49 +2,11 @@
 'use strict'
 
 
-# ############################################################################################################
-# CND                       = require 'cnd'
-# rpr                       = CND.rpr
-# badge                     = 'MKTS-GUI-TOOLBOX-FSM'
-# debug                     = CND.get_logger 'debug',     badge
-# warn                      = CND.get_logger 'warn',      badge
-# info                      = CND.get_logger 'info',      badge
-# urge                      = CND.get_logger 'urge',      badge
-# help                      = CND.get_logger 'help',      badge
-# whisper                   = CND.get_logger 'whisper',   badge
-# echo                      = CND.echo.bind CND
-# #...........................................................................................................
-# types                     = new ( require 'intertype' ).Intertype()
-# { isa
-#   validate
-#   declare
-#   type_of }               = types.export()
-# { freeze
-#   lets }                  = require 'letsfreezethat'
+############################################################################################################
 freeze                    = Object.freeze
-# if globalThis.require?
-#   StateMachine              = require 'javascript-state-machine'
-# Mutimix                   = require 'multimix'
-
-# #-----------------------------------------------------------------------------------------------------------
-# warn = ( message ) ->
-#   if µ?.DOM?.warn?        then µ.DOM.warn message
-#   else if console?.warn?  then console.warn message
-#   else throw new Error message
-#   return null
-
-# #===========================================================================================================
-# class Fsm extends Multimix
-#   constructor: ( fsmd ) ->
-#     # validate.fsmd fsmd
-
-# #===========================================================================================================
-# class Compund_fsm extends Multimix
-#   constructor: ( fsmds ) ->
-#     # validate.fsmds fsmds
-
 unless globalThis.debug?  then debug  = console.debug
 unless globalThis.rpr?    then rpr    = JSON.stringify
+
 
 #===========================================================================================================
 #
@@ -69,20 +31,19 @@ class Intermatic
   constructor: ( fsmd ) ->
     # validate.fsmd fsmd
     @_covered_names = new Set()
-    # @reserved       = freeze [ 'void', 'start', 'stop', 'goto', 'change', 'fail', ]
     @fsmd           = { fsmd..., }
     @triggers       = {}
     @lstates        = null
     @fsm_names      = []
     @has_subfsms    = false
     @_lstate        = 'void'
-    # @states         = {}
     @before         = {}
     @enter          = {}
     @stay           = {}
     @leave          = {}
     @after          = {}
     @up             = null
+    @_path          = null
     @_compile_cyclers()
     @_compile_triggers()
     @_compile_transitioners()
@@ -93,6 +54,7 @@ class Intermatic
     @_compile_subfsms()
     @_copy_other_attributes()
     delete @_covered_names
+    # delete @fsmd
     return null
 
   #---------------------------------------------------------------------------------------------------------
