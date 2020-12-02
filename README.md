@@ -112,7 +112,10 @@ alpha_btn:
 * Unreachable states cause an error on instantiation unless licensed in the configuration (FSMD) by setting
   `unreachable: true`.
 
-* A **move** (a.k.a. *transition*) is a triplet of `( verb, departure, destination, )` (think: "to `melt` (a
+* **departures** (`dpar`), **destinations** (`dest`) are the local states where a transition—a *move*—starts
+  and ends, respectively;
+* **verbs** are what triggers an FSM to change state.
+* A **move** (a.k.a. *transition*) is a triplet of `( verb, dpar, dest, )` (think: "to `melt` (a
   substance) means going from `solid` to `liquid` state", which describes the transition `( 'melt', 'solid',
   'liquid', )`). A given verb may connect a number of departures and destinations, and a given verb may
   connect several departures with several destinations; however, given a verb and a departure state, there
