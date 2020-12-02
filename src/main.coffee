@@ -138,11 +138,11 @@ class Intermatic
     triggers = @_tmp.fsmd.triggers = [ ( @_tmp.fsmd.triggers ? [] )..., ]
     return null unless ( cyclers = @_tmp.fsmd.cyclers )?
     #.......................................................................................................
-    for tname, lstates of cyclers
+    for verb, lstates of cyclers
       for cur_lstate, cur_idx in lstates
         nxt_idx     = ( cur_idx + 1 ) %% lstates.length
         nxt_lstate  = lstates[ nxt_idx ]
-        triggers.push [ cur_lstate, tname, nxt_lstate, ]
+        triggers.push [ cur_lstate, verb, nxt_lstate, ]
     #.......................................................................................................
     # freeze @_tmp.fsmd
     return null
@@ -162,28 +162,28 @@ class Intermatic
     #.......................................................................................................
     for triplet in triggers
       ### TAINT validate.list_of.list triplet ###
-      ### TAINT validate.tname tname ###
+      ### TAINT validate.verb verb ###
       ### TAINT validate that free of collision ###
-      [ from_lstate, tname, to_lstate, ] = triplet
+      [ departure, verb, destination, ] = triplet
       #.....................................................................................................
-      ### TAINT also validate that tuples [ from_lstate, tname, ] unique ###
-      if tname is 'start'
+      ### TAINT also validate that tuples [ departure, verb, ] unique ###
+      if verb is 'start'
         throw new Error "^interstate/fail@556^ duplica declaration of `start`: #{rpr triplet}" if has_start
         has_start     = true
-        @starts_with  = to_lstate
+        @starts_with  = destination
       #.....................................................................................................
       ### Special-case starred triggers: ###
-      if from_lstate is '*'
-        starred[ tname ] = to_lstate
+      if departure is '*'
+        starred[ verb ] = destination
         continue
       #.....................................................................................................
-      lstates.add from_lstate
-      lstates.add to_lstate
-      set ( @triggers[ tname ] ?= {} ), from_lstate, to_lstate
+      lstates.add departure
+      lstates.add destination
+      set ( @triggers[ verb ] ?= {} ), departure, destination
     #.......................................................................................................
-    for starred_name, to_lstate of starred
-      for from_lstate from lstates
-        set ( @triggers[ starred_name ] ?= {} ), from_lstate, to_lstate
+    for starred_name, destination of starred
+      for departure from lstates
+        set ( @triggers[ starred_name ] ?= {} ), departure, destination
     #.......................................................................................................
     @lstates = freeze [ lstates..., ]
     return null
@@ -192,36 +192,36 @@ class Intermatic
   _new_tid: -> tid = ++@constructor._tid; return "t#{tid}"
 
   #---------------------------------------------------------------------------------------------------------
-  _get_transitioner: ( tname, from_and_to_lstates = null ) ->
+  _get_transitioner: ( verb, destinations_by_departures = null ) ->
     ### TAINT too much logic to be done at in run time, try to precompile more ###
     return transitioner = ( P... ) =>
       ### TAINT use single transitioner method for all triggers? ###
-      from_lstate = @lstate
+      departure   = @lstate
       id          = @_new_tid()
       #-------------------------------------------------------------------------------------------------
-      if from_and_to_lstates?
-        unless ( to_lstate = from_and_to_lstates[ @lstate ] )?
-          trigger = freeze { id, failed: true, from: from_lstate, via: tname, }
+      if destinations_by_departures?
+        unless ( destination = destinations_by_departures[ departure ] )?
+          trigger = freeze { id, failed: true, from: departure, via: verb, }
           return @fail trigger
       else
-        [ to_lstate, P..., ] = P
+        [ destination, P..., ] = P
       #-------------------------------------------------------------------------------------------------
-      changed         = to_lstate isnt from_lstate
-      trigger         = { id, from: from_lstate, via: tname, to: to_lstate, }
+      changed         = destination isnt departure
+      trigger         = { id, from: departure, via: verb, to: destination, }
       trigger.changed = true if changed
       trigger         = freeze trigger
       ### TAINT add extra arguments P ###
       @before.any?              trigger
       @before.change?           trigger if changed
-      @before[ tname        ]?  trigger
+      @before[ verb        ]?  trigger
       @leave.any?               trigger if changed
-      @leave[  from_lstate  ]?  trigger if changed
-      @lstate = to_lstate if changed
+      @leave[  departure  ]?  trigger if changed
+      @lstate = destination if changed
       @stay.any?                trigger if not changed
-      @stay[   to_lstate    ]?  trigger if not changed
+      @stay[   destination    ]?  trigger if not changed
       @enter.any?               trigger if changed
-      @enter[  to_lstate    ]?  trigger if changed
-      @after[  tname        ]?  trigger
+      @enter[  destination    ]?  trigger if changed
+      @after[  verb        ]?  trigger
       @after.change?            trigger if changed
       @after.any?               trigger
       # if @up?.after.cchange?
@@ -233,14 +233,14 @@ class Intermatic
   #---------------------------------------------------------------------------------------------------------
   _compile_transitioners: ->
     @_tmp.known_names.add 'triggers'
-    for tname, from_and_to_lstates of @triggers
-      do ( tname, from_and_to_lstates ) =>
+    for verb, destinations_by_departures of @triggers
+      do ( verb, destinations_by_departures ) =>
         ### NOTE we *could* allow custom transitioners but that would only replicate behavior available
-        via `fsm.before[ tname ]()`, `fsm.after[ tname ]()`:
-        transitioner = @_tmp.fsmd[ tname ] ? @_get_transitioner tname, from_and_to_lstates ###
-        transitioner = @_get_transitioner tname, from_and_to_lstates
-        set @, tname, transitioner
-        @_tmp.known_names.add tname
+        via `fsm.before[ verb ]()`, `fsm.after[ verb ]()`:
+        transitioner = @_tmp.fsmd[ verb ] ? @_get_transitioner verb, destinations_by_departures ###
+        transitioner = @_get_transitioner verb, destinations_by_departures
+        set @, verb, transitioner
+        @_tmp.known_names.add verb
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -264,34 +264,34 @@ class Intermatic
       unless goto is '*'
         throw new Error "^interstate/_compile_handlers@776^ expected '*' for key `goto`, got #{rpr goto}"
       transitioner = @_get_transitioner 'goto', null
-      goto = ( to_lstate, P... ) => transitioner to_lstate, P...
-      for to_lstate in @lstates
-        goto[ to_lstate ] = ( P... ) => transitioner to_lstate, P...
+      goto = ( destination, P... ) => transitioner destination, P...
+      for destination in @lstates
+        goto[ destination ] = ( P... ) => transitioner destination, P...
       set @, 'goto', goto
     return null
 
   #---------------------------------------------------------------------------------------------------------
   _compile_can: ->
     @_tmp.known_names.add 'can'
-    can = ( tname ) =>
-      unless ( trigger = @triggers[ tname ] )?
-        throw new Error "^interstate/can@822^ unknown trigger #{rpr tname}"
+    can = ( verb ) =>
+      unless ( trigger = @triggers[ verb ] )?
+        throw new Error "^interstate/can@822^ unknown trigger #{rpr verb}"
       return trigger[ @lstate ]?
-    for tname of @triggers
-      can[ tname ] = ( P... ) => can tname, P...
+    for verb of @triggers
+      can[ verb ] = ( P... ) => can verb, P...
     set @, 'can', can
     return null
 
   #---------------------------------------------------------------------------------------------------------
   _compile_tryto: ->
     @_tmp.known_names.add 'tryto'
-    tryto = ( tname, P... ) =>
-      return false unless @can tname
+    tryto = ( verb, P... ) =>
+      return false unless @can verb
       ### TAINT we will possibly want to return some kind of result from trigger ###
-      @[ tname ] P...
+      @[ verb ] P...
       return true
-    for tname of @triggers
-      tryto[ tname ] = ( P... ) => tryto tname, P...
+    for verb of @triggers
+      tryto[ verb ] = ( P... ) => tryto verb, P...
     set @, 'tryto', tryto
     return null
 
