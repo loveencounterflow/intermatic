@@ -51,8 +51,8 @@ class Intermatic
     @data               = {}
     @history_length     = 3
     @_prv_lstates       = []
-    @_prv_vias          = []
-    @_nxt_via           = null
+    @_prv_verbs         = []
+    @_nxt_verb          = null
     @_nxt_destination   = null
     @up                 = null
     @_path              = null
@@ -98,7 +98,7 @@ class Intermatic
     #   get: -> @_prv_lstates[ @_prv_lstates.length - 1 ] ? null
     # #-------------------------------------------------------------------------------------------------------
     # via:
-    #   get: -> @_prv_vias[ @_prv_vias.length - 1 ] ? null
+    #   get: -> @_prv_verbs[ @_prv_verbs.length - 1 ] ? null
     #   set:  ( trigger ) -> @
     # #-------------------------------------------------------------------------------------------------------
     # to:
@@ -108,7 +108,7 @@ class Intermatic
       get: -> @_prv_lstates[ @_prv_lstates.length - 1 ] ? null
     #-------------------------------------------------------------------------------------------------------
     via:
-      get: -> @_prv_vias[ @_prv_vias.length - 1 ] ? null
+      get: -> @_prv_verbs[ @_prv_verbs.length - 1 ] ? null
     #-------------------------------------------------------------------------------------------------------
     to:
       get: -> '???'
