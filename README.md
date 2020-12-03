@@ -121,6 +121,8 @@ alpha_btn:
   connect several departures with several destinations; however, given a verb and a departure state, there
   can only be up to one destination state.
 
+* `fsm.history`
+
 * Multiple terminal states are not a problem.
 
 
@@ -206,9 +208,9 @@ fsm.goto 'lit'
 * [ ] percolate/bubble triggers (from sub to up? both directions? all FSMs in tree?)
 * [ ] when one trigger bubbles through the FSMs, how to tell when that trigger has been processed? Two
   consecutive events could have same name. Use ID?
-* [ ] implement `fsm.tryto 't'` to call trigger `t` only when allowed, avoiding calls to `fail()`
-* [ ] implement `fsm.can 't'` to test whether trigger `t` may be emitted from current state
-* [ ] implement attribute-access (cf. `Multimix`) for `goto`, `tryto` such that `fsm.goto 's'`, `fsm.tryto
+* [X] implement `fsm.tryto 't'` to call trigger `t` only when allowed, avoiding calls to `fail()`
+* [X] implement `fsm.can 't'` to test whether trigger `t` may be emitted from current state
+* [X] implement attribute-access (cf. `Multimix`) for `goto`, `tryto` such that `fsm.goto 's'`, `fsm.tryto
   't'` is equivalent to `fsm.goto.s()`, `fsm.tryto.t()`
 
 <!--
