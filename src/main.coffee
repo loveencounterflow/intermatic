@@ -208,9 +208,7 @@ class Intermatic
       #-------------------------------------------------------------------------------------------------
       if dests_by_deps?
         @_nxt_dest = dest = ( dests_by_deps[ dpar ] ? null )
-        unless dest?
-          trigger = freeze { id, failed: true, verb, dpar, }
-          return @fail trigger
+        return @fail P... unless dest?
       else
         [ dest, P..., ] = P
       #.....................................................................................................
