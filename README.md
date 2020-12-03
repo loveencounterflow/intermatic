@@ -218,7 +218,12 @@ fsm.goto 'lit'
 * [ ] make symbolic `'*'` equivalent to `'any'`
 * [ ] rename FSMD attribute `triggers` to `moves`, use `{ verb, dpar, dest, }` format
 * [ ] remove `s`/`trigger` argument from event handlers
+* [ ] state to be separated into three computed properties:
+  * `lstate`(?) for local state: just the text (value) indicating the state of that component
+  * `clstate`(?) for compound state with local states: object with `lstate` attributes for FSM and sub-FSMs
+  * `ccstate`(?) more complete state including history (?)
 
+  In addition, `move` property/ies to reflect `verb`, `dpar`, `dest` &c.
 
 <!--
 * [ ] consider using more flexible, clearer(?) syntax where triggers may be grouped as seen fit, ex.:
