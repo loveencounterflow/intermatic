@@ -195,7 +195,7 @@ class Intermatic
   _new_tid: -> tid = ++@constructor._tid; return "t#{tid}"
 
   #---------------------------------------------------------------------------------------------------------
-  _get_transitioner: ( verb, destinations_by_departures = null ) ->
+  _get_transitioner: ( verb, dests_by_deps = null ) ->
     ### TAINT add extra arguments P ###
     ### TAINT too much logic to be done at in run time, try to precompile more ###
     return transitioner = ( P... ) =>
@@ -206,8 +206,8 @@ class Intermatic
       @_nxt_dpar = dpar = @lstate
       id              = @_new_tid()
       #-------------------------------------------------------------------------------------------------
-      if destinations_by_departures?
-        @_nxt_dest = dest = ( destinations_by_departures[ dpar ] ? null )
+      if dests_by_deps?
+        @_nxt_dest = dest = ( dests_by_deps[ dpar ] ? null )
         unless dest?
           trigger = freeze { id, failed: true, verb, dpar, }
           return @fail trigger
@@ -247,12 +247,9 @@ class Intermatic
   #---------------------------------------------------------------------------------------------------------
   _compile_transitioners: ->
     @_tmp.known_names.add 'triggers'
-    for verb, destinations_by_departures of @triggers
-      do ( verb, destinations_by_departures ) =>
-        ### NOTE we *could* allow custom transitioners but that would only replicate behavior available
-        thru `fsm.before[ verb ]()`, `fsm.after[ verb ]()`:
-        transitioner = @_tmp.fsmd[ verb ] ? @_get_transitioner verb, destinations_by_departures ###
-        transitioner = @_get_transitioner verb, destinations_by_departures
+    for verb, dests_by_deps of @triggers
+      do ( verb, dests_by_deps ) =>
+        transitioner = @_get_transitioner verb, dests_by_deps
         set @, verb, transitioner
         @_tmp.known_names.add verb
     return null
