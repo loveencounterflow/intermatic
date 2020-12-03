@@ -48,7 +48,7 @@ class Intermatic
     @stay               = {}
     @leave              = {}
     @after              = {}
-    @data               = {}
+    @data               = null
     @history_length     = 1
     @_prv_lstates       = [ @_lstate, ]
     @_prv_verbs         = []
@@ -84,31 +84,37 @@ class Intermatic
     #-------------------------------------------------------------------------------------------------------
     cstate:
       get: ->
-        R =
-          # _prv_verbs:   @_prv_verbs   ### !!!!!!!!!!!!! ###
-          # _prv_lstates: @_prv_lstates ### !!!!!!!!!!!!! ###
-          lstate:       @lstate
-          path:         @path
-          verb:         @verb
-          dpar:         @dpar
-          dest:         @dest
-          changed:      '?'
-          ### TAINT should use frozen copy of data ###
-          data:         @data
-        R[ subfsm_name ] = @[ subfsm_name ].cstate for subfsm_name in @fsm_names
+        R                 = {}
+        R.path            = @path
+        R.lstate          = @lstate
+        R.verb            = x if ( x = @verb    )?
+        R.dpar            = x if ( x = @dpar    )?
+        R.dest            = x if ( x = @dest    )?
+        R.changed         = x if ( x = @changed )? and x
+        R.failed          = true if ( @dpar? and not @dest? )
+        ### TAINT should use frozen copy of data ###
+        R.data            = x if ( x = @data    )?
+        R[ subfsm_name ]  = @[ subfsm_name ].cstate for subfsm_name in @fsm_names
         return freeze R
     #-------------------------------------------------------------------------------------------------------
-    dpar:
-      get: -> @_nxt_dpar
+    EXP_cstate:
+      get: ->
+        R                 = {}
+        R.lstate          = @lstate
+        ### TAINT should use frozen copy of data ###
+        R.data            = x if ( x = @data    )?
+        R[ subfsm_name ]  = @[ subfsm_name ].EXP_cstate for subfsm_name in @fsm_names
+        return freeze R
     #-------------------------------------------------------------------------------------------------------
-    dest:
-      get: -> @_nxt_dest
+    dpar: get: -> @_nxt_dpar
+    dest: get: -> @_nxt_dest
+    verb: get: -> @_nxt_verb
+    fsms: get: -> ( @[ subfsm_name ] for subfsm_name in @fsm_names )
     #-------------------------------------------------------------------------------------------------------
-    verb:
-      get: -> @_nxt_verb
-    #-------------------------------------------------------------------------------------------------------
-    fsms:
-      get: -> ( @[ subfsm_name ] for subfsm_name in @fsm_names )
+    changed:
+      get: ->
+        return null unless @_nxt_dpar? and @_nxt_dest?
+        return @_nxt_dpar isnt @_nxt_dest
     #-------------------------------------------------------------------------------------------------------
     path:
       get: ->
@@ -203,37 +209,35 @@ class Intermatic
       @_nxt_verb      = verb
       ### TAINT consider to do this inside a property setter, as for `@lstate`: ###
       @_prv_verbs     = push_circular @_prv_verbs, verb, @history_length
-      @_nxt_dpar = dpar = @lstate
-      id              = @_new_tid()
+      @_nxt_dpar      = dpar = @lstate
+      # id              = @_new_tid()
       #-------------------------------------------------------------------------------------------------
-      if dests_by_deps?
-        @_nxt_dest = dest = ( dests_by_deps[ dpar ] ? null )
-        return @fail P... unless dest?
-      else
-        [ dest, P..., ] = P
+      # if not dests_by_deps?
+      #   debug '^374873^', verb, P
+      if dests_by_deps? then    dest          = ( dests_by_deps[ dpar ] ? null )
+      else                    [ dest, P..., ] = P
+      return @fail P... unless dest?
+      @_nxt_dest = dest
       #.....................................................................................................
       changed                   = dest isnt dpar
-      trigger                   = { id, verb, dpar, dest, }
-      trigger.changed           = true if changed
-      trigger                   = freeze trigger
       #.....................................................................................................
-      @before.any?              trigger
-      @before.change?           trigger if changed
-      @before[ verb ]?          trigger
+      @before.any?              P...
+      @before.change?           P... if changed
+      @before[ verb ]?          P...
       #.....................................................................................................
-      @leave.any?               trigger if changed
-      @leave[ dpar ]?           trigger if changed
+      @leave.any?               P... if changed
+      @leave[ dpar ]?           P... if changed
       #.....................................................................................................
       @lstate = dest if changed
       #.....................................................................................................
-      @stay.any?                trigger if not changed
-      @stay[ dest ]?            trigger if not changed
-      @enter.any?               trigger if changed
-      @enter[ dest ]?           trigger if changed
+      @stay.any?                P... if not changed
+      @stay[ dest ]?            P... if not changed
+      @enter.any?               P... if changed
+      @enter[ dest ]?           P... if changed
       #.....................................................................................................
-      @after[ verb ]?           trigger
-      @after.change?            trigger if changed
-      @after.any?               trigger
+      @after[ verb ]?           P...
+      @after.change?            P... if changed
+      @after.any?               P...
       #.....................................................................................................
       ### NOTE At this point, the transition has finished, so we reset the `@_nxt_*` attributes: ###
       @_nxt_verb                = null
@@ -272,10 +276,11 @@ class Intermatic
     if ( goto = @_tmp.fsmd.goto )?
       unless goto is '*'
         throw new Error "^interstate/_compile_handlers@776^ expected '*' for key `goto`, got #{rpr goto}"
-      transitioner = @_get_transitioner 'goto', null
-      goto = ( dest, P... ) => transitioner dest, P...
+      transitioner  = @_get_transitioner 'goto', null
+      goto          = ( dest, P... ) => transitioner dest, P...
       for dest in @lstates
-        goto[ dest ] = ( P... ) => transitioner dest, P...
+        do ( dest ) =>
+          goto[ dest ] = ( P... ) => transitioner dest, P...
       set @, 'goto', goto
     return null
 
@@ -325,6 +330,7 @@ class Intermatic
   _compile_data: ->
     @_tmp.known_names.add 'data'
     return null unless ( data = @_tmp.fsmd.data )?
+    @data = {}
     for pname, propd of Object.getOwnPropertyDescriptors @_tmp.fsmd.data
       Object.defineProperty @data, pname, propd
     return null
