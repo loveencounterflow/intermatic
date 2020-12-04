@@ -39,6 +39,7 @@ class Intermatic
     @_tmp.fsmd          = { fsmd..., }
     @_tmp.known_names   = new Set()
     @triggers           = {}
+    @cascades           = null
     @lstates            = null
     @fsm_names          = []
     @has_subfsms        = false
@@ -67,6 +68,7 @@ class Intermatic
     @_compile_tryto()
     @_compile_subfsms()
     @_compile_data()
+    @_compile_cascades()
     @_copy_other_attributes()
     delete @_tmp
     return null
@@ -227,6 +229,9 @@ class Intermatic
       #.....................................................................................................
       changed                   = dest isnt dpar
       #.....................................................................................................
+      if @cascades and @cascades.has verb
+        for subfsm_name in @fsm_names
+          @[ subfsm_name ].tryto[ verb ] P...
       @before.any?              P...
       @before.change?           P... if changed
       @before[ verb ]?          P...
@@ -341,6 +346,13 @@ class Intermatic
     @data = {}
     for pname, propd of Object.getOwnPropertyDescriptors @_tmp.fsmd.data
       Object.defineProperty @data, pname, propd
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _compile_cascades: ->
+    @_tmp.known_names.add 'cascades'
+    return null unless ( cascades = @_tmp.fsmd.cascades )?
+    @cascades = new Set cascades
     return null
 
   #---------------------------------------------------------------------------------------------------------
