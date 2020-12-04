@@ -92,8 +92,7 @@ class Intermatic
         R.dest            = x if ( x = @dest    )?
         R.changed         = x if ( x = @changed )? and x
         R.failed          = true if ( @dpar? and not @dest? )
-        ### TAINT should use frozen copy of data ###
-        R.data            = x if ( x = @data    )?
+        R.data            = freeze { x..., } if ( x = @data )?
         R[ subfsm_name ]  = @[ subfsm_name ].cstate for subfsm_name in @fsm_names
         return freeze R
     #-------------------------------------------------------------------------------------------------------
@@ -101,8 +100,15 @@ class Intermatic
       get: ->
         R                 = {}
         R.lstate          = @lstate
-        ### TAINT should use frozen copy of data ###
-        R.data            = x if ( x = @data    )?
+        R.data            = freeze { x..., } if ( x = @data )?
+        R[ subfsm_name ]  = @[ subfsm_name ].EXP_cstate for subfsm_name in @fsm_names
+        return freeze R
+    #-------------------------------------------------------------------------------------------------------
+    EXP_lstates:
+      get: ->
+        R                 = {}
+        R.lstate          = @lstate
+        R.data            = freeze { x..., } if ( x = @data )?
         R[ subfsm_name ]  = @[ subfsm_name ].EXP_cstate for subfsm_name in @fsm_names
         return freeze R
     #-------------------------------------------------------------------------------------------------------
