@@ -1,6 +1,6 @@
 {
   "name": "intermatic",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "state machine for NodeJS and the browser",
   "main": "index.js",
   "scripts": {
@@ -22,6 +22,5 @@
     "url": "https://github.com/loveencounterflow/intermatic/issues"
   },
   "homepage": "https://github.com/loveencounterflow/intermatic#readme",
-  "dependencies": {
-  }
+  "dependencies": {}
 }
