@@ -292,7 +292,8 @@ class Intermatic
         throw new Error "^interstate/can@822^ unknown trigger #{rpr verb}"
       return trigger[ @lstate ]?
     for verb of @triggers
-      can[ verb ] = ( P... ) => can verb, P...
+      do ( verb ) =>
+        can[ verb ] = ( P... ) => can verb, P...
     set @, 'can', can
     return null
 
@@ -305,7 +306,8 @@ class Intermatic
       @[ verb ] P...
       return true
     for verb of @triggers
-      tryto[ verb ] = ( P... ) => tryto verb, P...
+      do ( verb ) =>
+        tryto[ verb ] = ( P... ) => tryto verb, P...
     set @, 'tryto', tryto
     return null
 
