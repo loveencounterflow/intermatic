@@ -106,12 +106,15 @@ class Intermatic
         R[ subfsm_name ]  = @[ subfsm_name ].EXP_cstate for subfsm_name in @fsm_names
         return freeze R
     #-------------------------------------------------------------------------------------------------------
-    EXP_lstates:
+    EXP_dstate:
       get: ->
-        R                 = {}
-        R.lstate          = @lstate
-        R.data            = freeze { x..., } if ( x = @data )?
-        R[ subfsm_name ]  = @[ subfsm_name ].EXP_cstate for subfsm_name in @fsm_names
+        target        = { lstate: @lstate, }
+        R             = { [@name]: target, }
+        target.data   = @data if @data?
+        for subfsm_name in @fsm_names
+          sub_fsm = @[ subfsm_name ]
+          Object.assign target, sub_fsm.EXP_dstate
+        freeze target
         return freeze R
     #-------------------------------------------------------------------------------------------------------
     dpar: get: -> @_nxt_dpar
