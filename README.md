@@ -214,10 +214,10 @@ fsm.goto 'lit'
   't'` is equivalent to `fsm.goto.s()`, `fsm.tryto.t()`
 * [ ] implement cascading events, such that `top.start()` implicitly calls `start()` on all sub-FSMs
 * [ ] asynchronous moves
-* [ ] equivalents to `setTiemout()`, `setInterval()`?
+* [ ] equivalents to `setTimeout()`, `setInterval()`?
 * [ ] make symbolic `'*'` equivalent to `'any'`
 * [ ] rename FSMD attribute `triggers` to `moves`, use `{ verb, dpar, dest, }` format
-* [ ] remove `s`/`trigger` argument from event handlers
+* [X] remove `s`/`trigger` argument from event handlers
 * [ ] state to be separated into three computed properties:
   * `lstate`(?) for local state: just the text (value) indicating the state of that component
   * `clstate`(?) for compound state with local states: object with `lstate` attributes for FSM and sub-FSMs
