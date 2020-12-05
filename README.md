@@ -214,12 +214,73 @@ fsm.goto 'lit'
 
 * [ ] use lists of functions when compiling actions (allowing FSMDs to define either a list of functions or
   else a single function that compiles into a list with one element)
-* [ ] should we unify `before` and `enter`, `after` and `leave`? Possible setup uses 4 categories as opposed
+* [ ] **REJECTED** should we unify `before` and `enter`, `after` and `leave`? Possible setup uses 4 categories as opposed
   to the 5 now in use (`before`, `after`, `enter`, `leave`, `stay`):
   * `before`—for move and state actions, always called before move is started or state is entered
   * `stay`—for state actions, only called when `dpar` equals `dest`
   * `change`—for state actions, only called when `dpar` is different from `dest`
   * `after`—for move and state actions, always called after move or state action has finished
+
+* [ ] logically there are 2 points in time when an action can take place, *before* a move occurs and *after*
+  it has occurred. At
+ ```
+          before enter a |     |      |
+       ——————————————————|—————|      |——————————————————
+                         |  a  |      |
+                         |     |      | after do step
+                         |     |      | after enter a
+                         |     |——————|
+                         |     |//////|
+                         |     |——————|
+          before do step |     |      |
+                         |     | step |
+          before leave a |     |      |
+          before enter b |     |      |
+       ——————————————————|—————|      |——————————————————
+                         |  b  |      |
+                         |     |      | after do step
+                         |     |      | after enter b
+                         |     |——————|
+                         |     |//////|
+                         |     |——————|
+          before do step |     |      |
+                         |     | step |
+          before leave b |     |      |
+          before enter c |     |      |
+       ——————————————————|—————|      |——————————————————
+                         |  c  |      |
+                         |     |      | after do step
+                         |     |      | after enter c
+                         |     |——————|
+                         |     |//////|
+                         |     |——————|
+  ```
+
+  ```
+  before:
+    stay:                     # when state has not changed, so `a -> a`
+      two: [ ( -> ), ..., ]
+    enter:                    # when state is about to change, so before `a -> b`
+      two: [ ( -> ), ..., ]
+    leave:
+      two: [ ( -> ), ..., ]
+    XXXXXXX:
+      two: [ ( -> ), ..., ]
+    do:
+      toggle: [ ( -> ), ..., ]
+  after:
+    stay:
+      two: [ ( -> ), ..., ]
+    enter:
+      two: [ ( -> ), ..., ]
+    leave:
+      two: [ ( -> ), ..., ]
+    XXXXXXX:
+      two: [ ( -> ), ..., ]
+    do:
+      toggle: ->
+  ```
+
 
 * [ ] implement `goto` with list of target (or source and target?) states
 * [ ] implement `toggle`
