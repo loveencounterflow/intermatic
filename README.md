@@ -221,100 +221,75 @@ fsm.goto 'lit'
   * `change`—for state actions, only called when `dpar` is different from `dest`
   * `after`—for move and state actions, always called after move or state action has finished
 
-* [ ] logically there are 2 points in time when an action can take place, *before* a move occurs and *after*
-  it has occurred. At
- <!-- ``` -->
-        <!-- +——————————————————+——————+——————+——————————————————+——————+——————+ -->
-        <!-- |                  |      |      |                  |      |      | -->
-        <!-- | actions before   |lstate| verb | actions after    | dpar | dest | -->
-        <!-- |                  |      |      |                  |      |      | -->
-        <!-- +==================+======+======+==================+======+======+ -->
-        <!-- |                  |      |      |                  |      |      | -->
-        <!-- |   before enter a |      |      |                  |      |      | -->
-        <!-- |——————————————————|——————|      |——————————————————|      |      | -->
-        <!-- |                  |  a   |      |                  |      |      | -->
-        <!-- |                  |      |      | after do step    |      |      | -->
-        <!-- |                  |      |      | after enter a    |      |      | -->
-        <!-- |                  |      |——————|                  |      |      | -->
-        <!-- |                  |      |//////|                  |      |      | -->
-        <!-- |                  |      |——————|                  |      |      | -->
-        <!-- |   before do step |      |      |                  |      |      | -->
-        <!-- |                  |      | step |                  |      |      | -->
-        <!-- |   before leave a |      |      |                  |      |      | -->
-        <!-- |   before enter b |      |      |                  |      |      | -->
-        <!-- |——————————————————|——————|      |——————————————————|      |      | -->
-        <!-- |                  |  b   |      |                  |      |      | -->
-        <!-- |                  |      |      | after do step    |      |      | -->
-        <!-- |                  |      |      | after enter b    |      |      | -->
-        <!-- |                  |      |——————|                  |      |      | -->
-        <!-- |                  |      |//////|                  |      |      | -->
-        <!-- |                  |      |——————|                  |      |      | -->
-        <!-- |   before do step |      |      |                  |      |      | -->
-        <!-- |                  |      | step |                  |      |      | -->
-        <!-- |   before leave b |      |      |                  |      |      | -->
-        <!-- |   before enter c |      |      |                  |      |      | -->
-        <!-- |——————————————————|——————|      |——————————————————|      |      | -->
-        <!-- |                  |  c   |      |                  |      |      | -->
-        <!-- |                  |      |      | after do step    |      |      | -->
-        <!-- |                  |      |      | after enter c    |      |      | -->
-        <!-- |                  |      |——————|                  |      |      | -->
-        <!-- |                  |      |//////|                  |      |      | -->
-        <!-- |                  |      |——————|                  |      |      | -->
-        <!-- |                  |      |      |                  |      |      | -->
-  <!-- ``` -->
+* [ ]
 
- ```
-                  ┌────────────────────┬──────┬──────┬──────┬──────┐
-                  │                    │      │      │      │      │
-                  │            actions │lstate│ verb │ dpar │ dest │
-                  │                    │      │      │      │      │
-                  ╞════════════════════╪══════╪══════╪══════╪══════╡
-                  │                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-──────────────────│────────────────────│ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-        φ.start() │                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-                  │                    │ void │ start│ void │ a    │
-                  │ φ.start.before[]() │ void │ start│ void │ a    │
-                  │   φ.void.leave[]() │ void │ start│ void │ a    │
-                  │────────────────────│──────│ start│ void │ a    │
-                  │      φ.a.enter[]() │ a    │ start│ void │ a    │
-                  │  φ.start.after[]() │ a    │ start│ void │ a    │
-                  │                    │ a    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-──────────────────│────────────────────│ a    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-         φ.step() │                    │ a    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-                  │                    │ a    │ step │ a    │ b    │
-                  │  φ.step.before[]() │ a    │ step │ a    │ b    │
-                  │      φ.a.leave[]() │ a    │ step │ a    │ b    │
-                  │────────────────────│──────│ step │ a    │ b    │
-                  │      φ.b.enter[]() │ b    │ step │ a    │ b    │
-                  │   φ.step.after[]() │ b    │ step │ a    │ b    │
-                  │                    │ b    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-──────────────────│────────────────────│ b    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-         φ.step() │                    │ b    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-                  │                    │ b    │ step │ b    │ c    │
-                  │  φ.step.before[]() │ b    │ step │ b    │ c    │
-                  │      φ.b.leave[]() │ b    │ step │ b    │ c    │
-                  │────────────────────│──────│ step │ b    │ c    │
-                  │      φ.c.enter[]() │ c    │ step │ b    │ c    │
-                  │   φ.step.after[]() │ c    │ step │ b    │ c    │
-                  │                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-──────────────────│────────────────────│ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-         φ.step() │                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-                  │                    │ c    │ step │ c    │ c    │
-                  │  φ.step.before[]() │ c    │ step │ c    │ c    │
-                  │       φ.c.stay[]() │ c    │ step │ c    │ c    │
-                  │   φ.step.after[]() │ c    │ step │ c    │ c    │
-                  │                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-                  │                    │      │      │      │      │
-  ```
+```
+                    ┌────────────────────┬──────┬──────┬──────┬──────┐
+                    │                    │      │      │      │      │
+                    │            actions │lstate│ verb │ dpar │ dest │
+                    │                    │      │      │      │      │
+                    ╞════════════════════╪══════╪══════╪══════╪══════╡
+                    │                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+  ──────────────────│────────────────────│ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+          φ.start() │                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+                    │                    │ void │ start│ void │ a    │
+                    │ φ.start.before[]() │ void │ start│ void │ a    │
+                    │   φ.void.leave[]() │ void │ start│ void │ a    │
+                    │────────────────────│──────│ start│ void │ a    │
+                    │      φ.a.enter[]() │ a    │ start│ void │ a    │
+                    │  φ.start.after[]() │ a    │ start│ void │ a    │
+                    │                    │ a    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+  ──────────────────│────────────────────│ a    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+           φ.step() │                    │ a    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+                    │                    │ a    │ step │ a    │ b    │
+                    │  φ.step.before[]() │ a    │ step │ a    │ b    │
+                    │      φ.a.leave[]() │ a    │ step │ a    │ b    │
+                    │────────────────────│──────│ step │ a    │ b    │
+                    │      φ.b.enter[]() │ b    │ step │ a    │ b    │
+                    │   φ.step.after[]() │ b    │ step │ a    │ b    │
+                    │                    │ b    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+  ──────────────────│────────────────────│ b    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+           φ.step() │                    │ b    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+                    │                    │ b    │ step │ b    │ c    │
+                    │  φ.step.before[]() │ b    │ step │ b    │ c    │
+                    │      φ.b.leave[]() │ b    │ step │ b    │ c    │
+                    │────────────────────│──────│ step │ b    │ c    │
+                    │      φ.c.enter[]() │ c    │ step │ b    │ c    │
+                    │   φ.step.after[]() │ c    │ step │ b    │ c    │
+                    │                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+  ──────────────────│────────────────────│ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+           φ.step() │                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+                    │                    │ c    │ step │ c    │ c    │
+                    │  φ.step.before[]() │ c    │ step │ c    │ c    │
+                    │       φ.c.stay[]() │ c    │ step │ c    │ c    │
+                    │   φ.step.after[]() │ c    │ step │ c    │ c    │
+                    │                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+                    │                    │      │      │      │      │
+```
 
-  ```
-  two:
-    enter:    [ ( -> ), ..., ]  # when state is about to be entered from another state
-    leave:    [ ( -> ), ..., ]  # when state is about to be left    for  another state
-  toggle:
-    before:   [ ( -> ), ..., ]  # before move
-    after:    [ ( -> ), ..., ]  # after move
-  ```
+```
+fsmd =
+  name: 'φ'
+  triggers: [
+    [ 'start',  'void', 'a',    ],
+    [ 'step',   'a',    'b',    ],
+    [ 'step',   'b',    'c',    ],
+    [ 'step',   'c',    'c',    ],
+    [ 'stop',   'c',    'void', ], ]
+  start:
+    before:   [ ( -> ), ..., ]        # NOTE: single function or list of functions
+    after:    [ ( -> ), ..., ]        # NOTE: single function or list of functions
+  a:
+    enter:    [ ( -> ), ..., ]        # NOTE: single function or list of functions
+    leave:    [ ( -> ), ..., ]        # NOTE: single function or list of functions
+  b:
+    enter:    [ ( -> ), ..., ]        # NOTE: single function or list of functions
+    leave:    [ ( -> ), ..., ]        # NOTE: single function or list of functions
+  c:
+    enter:    [ ( -> ), ..., ]        # NOTE: single function or list of functions
+    stay:     [ ( -> ), ..., ]        # NOTE: single function or list of functions
+    leave:    [ ( -> ), ..., ]        # NOTE: single function or list of functions
+```
 
 
 
