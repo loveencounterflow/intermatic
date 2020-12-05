@@ -120,6 +120,7 @@ class Intermatic
     dpar: get: -> @_nxt_dpar
     dest: get: -> @_nxt_dest
     verb: get: -> @_nxt_verb
+    move: get: -> freeze { verb: @verb, dpar: @dpar, dest:@dest, }
     fsms: get: -> ( @[ subfsm_name ] for subfsm_name in @fsm_names )
     #-------------------------------------------------------------------------------------------------------
     changed:
@@ -235,6 +236,7 @@ class Intermatic
       if @cascades and @cascades.has verb
         for subfsm_name in @fsm_names
           @[ subfsm_name ].tryto verb, P...
+      #.....................................................................................................
       @before.any?              P...
       @before.change?           P... if changed
       @before[ verb ]?          P...
