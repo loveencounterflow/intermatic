@@ -223,72 +223,88 @@ fsm.goto 'lit'
 
 * [ ] logically there are 2 points in time when an action can take place, *before* a move occurs and *after*
   it has occurred. At
+ <!-- ``` -->
+        <!-- +——————————————————+——————+——————+——————————————————+——————+——————+ -->
+        <!-- |                  |      |      |                  |      |      | -->
+        <!-- | actions before   |lstate| verb | actions after    | dpar | dest | -->
+        <!-- |                  |      |      |                  |      |      | -->
+        <!-- +==================+======+======+==================+======+======+ -->
+        <!-- |                  |      |      |                  |      |      | -->
+        <!-- |   before enter a |      |      |                  |      |      | -->
+        <!-- |——————————————————|——————|      |——————————————————|      |      | -->
+        <!-- |                  |  a   |      |                  |      |      | -->
+        <!-- |                  |      |      | after do step    |      |      | -->
+        <!-- |                  |      |      | after enter a    |      |      | -->
+        <!-- |                  |      |——————|                  |      |      | -->
+        <!-- |                  |      |//////|                  |      |      | -->
+        <!-- |                  |      |——————|                  |      |      | -->
+        <!-- |   before do step |      |      |                  |      |      | -->
+        <!-- |                  |      | step |                  |      |      | -->
+        <!-- |   before leave a |      |      |                  |      |      | -->
+        <!-- |   before enter b |      |      |                  |      |      | -->
+        <!-- |——————————————————|——————|      |——————————————————|      |      | -->
+        <!-- |                  |  b   |      |                  |      |      | -->
+        <!-- |                  |      |      | after do step    |      |      | -->
+        <!-- |                  |      |      | after enter b    |      |      | -->
+        <!-- |                  |      |——————|                  |      |      | -->
+        <!-- |                  |      |//////|                  |      |      | -->
+        <!-- |                  |      |——————|                  |      |      | -->
+        <!-- |   before do step |      |      |                  |      |      | -->
+        <!-- |                  |      | step |                  |      |      | -->
+        <!-- |   before leave b |      |      |                  |      |      | -->
+        <!-- |   before enter c |      |      |                  |      |      | -->
+        <!-- |——————————————————|——————|      |——————————————————|      |      | -->
+        <!-- |                  |  c   |      |                  |      |      | -->
+        <!-- |                  |      |      | after do step    |      |      | -->
+        <!-- |                  |      |      | after enter c    |      |      | -->
+        <!-- |                  |      |——————|                  |      |      | -->
+        <!-- |                  |      |//////|                  |      |      | -->
+        <!-- |                  |      |——————|                  |      |      | -->
+        <!-- |                  |      |      |                  |      |      | -->
+  <!-- ``` -->
+
  ```
-
-
-        +——————————————————+——————+——————+——————————————————+——————+——————+
-        |                  |      |      |                  |      |      |
-        | actions before   |lstate| verb | actions after    | dpar | dest |
-        |                  |      |      |                  |      |      |
-        +==================+======+======+==================+======+======+
-        |                  |      |      |                  |      |      |
-        |   before enter a |      |      |                  |      |      |
-        |——————————————————|——————|      |——————————————————|      |      |
-        |                  |  a   |      |                  |      |      |
-        |                  |      |      | after do step    |      |      |
-        |                  |      |      | after enter a    |      |      |
-        |                  |      |——————|                  |      |      |
-        |                  |      |//////|                  |      |      |
-        |                  |      |——————|                  |      |      |
-        |   before do step |      |      |                  |      |      |
-        |                  |      | step |                  |      |      |
-        |   before leave a |      |      |                  |      |      |
-        |   before enter b |      |      |                  |      |      |
-        |——————————————————|——————|      |——————————————————|      |      |
-        |                  |  b   |      |                  |      |      |
-        |                  |      |      | after do step    |      |      |
-        |                  |      |      | after enter b    |      |      |
-        |                  |      |——————|                  |      |      |
-        |                  |      |//////|                  |      |      |
-        |                  |      |——————|                  |      |      |
-        |   before do step |      |      |                  |      |      |
-        |                  |      | step |                  |      |      |
-        |   before leave b |      |      |                  |      |      |
-        |   before enter c |      |      |                  |      |      |
-        |——————————————————|——————|      |——————————————————|      |      |
-        |                  |  c   |      |                  |      |      |
-        |                  |      |      | after do step    |      |      |
-        |                  |      |      | after enter c    |      |      |
-        |                  |      |——————|                  |      |      |
-        |                  |      |//////|                  |      |      |
-        |                  |      |——————|                  |      |      |
-        |                  |      |      |                  |      |      |
+        +——————————————————+——————+——————+——————+——————+
+        |                  |      |      |      |      |
+        |          actions |lstate| verb | dpar | dest |
+        |                  |      |      |      |      |
+        +==================+======+======+======+======+
+        |                  |      | step | ?    | a    |
+        |——————————————————|——————| step | ?    | a    |
+        |          enter a |      | step | ?    | a    |
+        |                  |  a   | step | ?    | a    |
+        |       after step |      | step | ?    | a    |
+        |                  |      |  ⦼  |      |      |
+        |                  |      |  ⦼  |      |      |
+        |                  |      |  ⦼  |      |      |
+        |      before step |      | step | a    | b    |
+        |          leave a |      | step | a    | b    |
+        |——————————————————|——————| step | a    | b    |
+        |          enter b |      | step | a    | b    |
+        |                  |  b   | step | a    | b    |
+        |       after step |      | step | a    | b    |
+        |                  |      |      |      |      |
+        |          leave b |      |      |      |      |
+        |      before step |      |      |      |      |
+        |——————————————————|——————| step |      |      |
+        |       after step |      |      |      |      |
+        |          enter c |      |      |      |      |
+        |                  |  c   |      |      |      |
+        |          leave c |      |      |      |      |
+        |      before step |      |      |      |      |
+        |——————————————————|——————| step |      |      |
+        |                  |      |      |      |      |
   ```
 
   ```
-  before:
-    stay:                     # when state has not changed, so `a -> a`
-      two: [ ( -> ), ..., ]
-    enter:                    # when state is about to change, so before `a -> b`
-      two: [ ( -> ), ..., ]
-    leave:
-      two: [ ( -> ), ..., ]
-    XXXXXXX:
-      two: [ ( -> ), ..., ]
-    do:
-      toggle: [ ( -> ), ..., ]
-  after:
-    stay:
-      two: [ ( -> ), ..., ]
-    enter:
-      two: [ ( -> ), ..., ]
-    leave:
-      two: [ ( -> ), ..., ]
-    XXXXXXX:
-      two: [ ( -> ), ..., ]
-    do:
-      toggle: ->
+  two:
+    enter:    [ ( -> ), ..., ]  # when state is about to be entered from another state
+    leave:    [ ( -> ), ..., ]  # when state is about to be left    for  another state
+  toggle:
+    before:   [ ( -> ), ..., ]  # before move
+    after:    [ ( -> ), ..., ]  # after move
   ```
+
 
 
 * [ ] implement `goto` with list of target (or source and target?) states
