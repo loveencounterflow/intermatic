@@ -264,35 +264,44 @@ fsm.goto 'lit'
   <!-- ``` -->
 
  ```
-        ┌──────────────────┬──────┬──────┬──────┬──────┐
-        │                  │      │      │      │      │
-        │          actions │lstate│ verb │ dpar │ dest │
-        │                  │      │      │      │      │
-        ╞══════════════════╪══════╪══════╪══════╪══════╡
-        │       leave void │ void │ start│ void │ a    │
-        │──────────────────│──────│ step │ c    │ a    │
-        │          enter a │  a   │ step │ c    │ a    │
-        │       after step │  a   │ step │ c    │ a    │
-        │                  │  a   │ ╳╳╳╳ │ ╳╳╳╳ │ ╳╳╳╳ │
-          ...
-        │                  │  a   │ ╳╳╳╳ │ ╳╳╳╳ │ ╳╳╳╳ │
-        │      before step │  a   │ step │ a    │ b    │
-        │          leave a │  a   │ step │ a    │ b    │
-        │──────────────────│──────│ step │ a    │ b    │
-        │          enter b │  b   │ step │ a    │ b    │
-        │       after step │  b   │ step │ a    │ b    │
-        │                  │  b   │ ╳╳╳╳ │ ╳╳╳╳ │ ╳╳╳╳ │
-          ...
-        │                  │  b   │ ╳╳╳╳ │ ╳╳╳╳ │ ╳╳╳╳ │
-        │      before step │  b   │ step │ b    │ c    │
-        │          leave b │  b   │ step │ b    │ c    │
-        │──────────────────│──────│ step │ b    │ c    │
-        │          enter c │  c   │ step │ b    │ c    │
-        │       after step │  c   │ step │ b    │ c    │
-        │                  │  c   │ ╳╳╳╳ │ ╳╳╳╳ │ ╳╳╳╳ │
-          ...
-        │                  │  c   │ ╳╳╳╳ │ ╳╳╳╳ │ ╳╳╳╳ │
-        │                  │      │      │      │      │
+                  ┌────────────────────┬──────┬──────┬──────┬──────┐
+                  │                    │      │      │      │      │
+                  │            actions │lstate│ verb │ dpar │ dest │
+                  │                    │      │      │      │      │
+                  ╞════════════════════╪══════╪══════╪══════╪══════╡
+                  │                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+        φ.start() │                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+                  │                    │ void │ start│ void │ a    │
+                  │ φ.start.before[]() │ void │ start│ void │ a    │
+                  │   φ.void.leave[]() │ void │ start│ void │ a    │
+                  │────────────────────│──────│ start│ void │ a    │
+                  │      φ.a.enter[]() │ a    │ start│ void │ a    │
+                  │  φ.start.after[]() │ a    │ start│ void │ a    │
+                  │                    │ a    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+         φ.step() │                    │ a    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+                  │                    │ a    │ step │ a    │ b    │
+                  │  φ.step.before[]() │ a    │ step │ a    │ b    │
+                  │      φ.a.leave[]() │ a    │ step │ a    │ b    │
+                  │────────────────────│──────│ step │ a    │ b    │
+                  │      φ.b.enter[]() │ b    │ step │ a    │ b    │
+                  │   φ.step.after[]() │ b    │ step │ a    │ b    │
+                  │                    │ b    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+         φ.step() │                    │ b    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+                  │                    │ b    │ step │ b    │ c    │
+                  │  φ.step.before[]() │ b    │ step │ b    │ c    │
+                  │      φ.b.leave[]() │ b    │ step │ b    │ c    │
+                  │────────────────────│──────│ step │ b    │ c    │
+                  │      φ.c.enter[]() │ c    │ step │ b    │ c    │
+                  │   φ.step.after[]() │ c    │ step │ b    │ c    │
+                  │                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+         φ.step() │                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+                  │                    │ c    │ step │ c    │ c    │
+                  │  φ.step.before[]() │ c    │ step │ c    │ c    │
+                  │       φ.c.stay[]() │ c    │ step │ c    │ c    │
+                  │────────────────────│──────│ step │ c    │ c    │
+                  │   φ.step.after[]() │ c    │ step │ c    │ c    │
+                  │                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+                  │                    │      │      │      │      │
   ```
 
   ```
