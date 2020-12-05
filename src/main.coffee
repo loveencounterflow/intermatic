@@ -142,8 +142,8 @@ class Intermatic
         return freeze R
 
   #---------------------------------------------------------------------------------------------------------
-  fail: ( trigger ) ->
-    throw new Error "^interstate/fail@556^ trigger not allowed: (#{rpr @name}) #{rpr trigger}"
+  fail: ->
+    throw new Error "^interstate/fail@557^ trigger not allowed: #{rpr { name: @name, verb: @verb, dpar: @dpar, }}"
 
   #---------------------------------------------------------------------------------------------------------
   _compile_fail: ->
