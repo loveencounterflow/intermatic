@@ -121,6 +121,9 @@ alpha_btn:
   connect several departures with several destinations; however, given a verb and a departure state, there
   can only be up to one destination state.
 
+* **actions** are (synchronous or asynchronous) functions that are called in response to actions having taken
+  or about to take place
+
 * `fsm.history`
 
 * Multiple terminal states are not a problem.
@@ -208,6 +211,15 @@ fsm.goto 'lit'
 * [X] Implement computed property `move` as `{ verb, dpar, dest, }`
 
 ------------------------------------------------------------------------------------------------------------
+
+* [ ] use lists of functions when compiling actions (allowing FSMDs to define either a list of functions or
+  else a single function that compiles into a list with one element)
+* [ ] should we unify `before` and `enter`, `after` and `leave`? Possible setup uses 4 categories as opposed
+  to the 5 now in use (`before`, `after`, `enter`, `leave`, `stay`):
+  * `before`—for move and state actions, always called before move is started or state is entered
+  * `stay`—for state actions, only called when `dpar` equals `dest`
+  * `change`—for state actions, only called when `dpar` is different from `dest`
+  * `after`—for move and state actions, always called after move or state action has finished
 
 * [ ] implement `goto` with list of target (or source and target?) states
 * [ ] implement `toggle`
