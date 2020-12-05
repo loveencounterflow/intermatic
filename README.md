@@ -269,30 +269,29 @@ fsm.goto 'lit'
         |          actions |lstate| verb | dpar | dest |
         |                  |      |      |      |      |
         +==================+======+======+======+======+
-        |                  |      | step | ?    | a    |
-        |——————————————————|——————| step | ?    | a    |
-        |          enter a |      | step | ?    | a    |
-        |                  |  a   | step | ?    | a    |
-        |       after step |      | step | ?    | a    |
-        |                  |      |  ∅   |      |      |
-        |                  |      |  ∅   |      |      |
-        |                  |      |  ∅   |      |      |
-        |      before step |      | step | a    | b    |
-        |          leave a |      | step | a    | b    |
+        |       leave void | void | start| void | a    |
+        |——————————————————|——————| step | c    | a    |
+        |          enter a |  a   | step | c    | a    |
+        |       after step |  a   | step | c    | a    |
+        |                  |  a   | ∅    | ∅    | ∅    |
+          ...
+        |                  |  a   | ∅    | ∅    | ∅    |
+        |      before step |  a   | step | a    | b    |
+        |          leave a |  a   | step | a    | b    |
         |——————————————————|——————| step | a    | b    |
-        |          enter b |      | step | a    | b    |
-        |                  |  b   | step | a    | b    |
-        |       after step |      | step | a    | b    |
-        |                  |      |      |      |      |
-        |          leave b |      |      |      |      |
-        |      before step |      |      |      |      |
-        |——————————————————|——————| step |      |      |
-        |       after step |      |      |      |      |
-        |          enter c |      |      |      |      |
-        |                  |  c   |      |      |      |
-        |          leave c |      |      |      |      |
-        |      before step |      |      |      |      |
-        |——————————————————|——————| step |      |      |
+        |          enter b |  b   | step | a    | b    |
+        |       after step |  b   | step | a    | b    |
+        |                  |  b   | ∅    | ∅    | ∅    |
+          ...
+        |                  |  b   | ∅    | ∅    | ∅    |
+        |      before step |  b   | step | b    | c    |
+        |          leave b |  b   | step | b    | c    |
+        |——————————————————|——————| step | b    | c    |
+        |          enter c |  c   | step | b    | c    |
+        |       after step |  c   | step | b    | c    |
+        |                  |  c   | ∅    | ∅    | ∅    |
+          ...
+        |                  |  c   | ∅    | ∅    | ∅    |
         |                  |      |      |      |      |
   ```
 
