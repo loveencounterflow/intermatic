@@ -112,7 +112,7 @@ alpha_btn:
 * Unreachable states cause an error on instantiation unless licensed in the configuration (FSMD) by setting
   `unreachable: true`.
 
-* **departures** (`dpar`), **destinations** (`dest`) are the local states where a transition—a *move*—starts
+* **departures** (`dpar`), **destinations** (`dest`) are the local states where a transition─a *move*─starts
   and ends, respectively;
 * **verbs** are what triggers an FSM to change state.
 * A **move** (a.k.a. *transition*) is a triplet of `( verb, dpar, dest, )` (think: "to `melt` (a
@@ -264,35 +264,35 @@ fsm.goto 'lit'
   <!-- ``` -->
 
  ```
-        +——————————————————+——————+——————+——————+——————+
-        |                  |      |      |      |      |
-        |          actions |lstate| verb | dpar | dest |
-        |                  |      |      |      |      |
-        +==================+======+======+======+======+
-        |       leave void | void | start| void | a    |
-        |——————————————————|——————| step | c    | a    |
-        |          enter a |  a   | step | c    | a    |
-        |       after step |  a   | step | c    | a    |
-        |                  |  a   | ∅    | ∅    | ∅    |
+        ┌──────────────────┬──────┬──────┬──────┬──────┐
+        │                  │      │      │      │      │
+        │          actions │lstate│ verb │ dpar │ dest │
+        │                  │      │      │      │      │
+        ╞══════════════════╪══════╪══════╪══════╪══════╡
+        │       leave void │ void │ start│ void │ a    │
+        │──────────────────│──────│ step │ c    │ a    │
+        │          enter a │  a   │ step │ c    │ a    │
+        │       after step │  a   │ step │ c    │ a    │
+        │                  │  a   │ ╳╳╳╳ │ ╳╳╳╳ │ ╳╳╳╳ │
           ...
-        |                  |  a   | ∅    | ∅    | ∅    |
-        |      before step |  a   | step | a    | b    |
-        |          leave a |  a   | step | a    | b    |
-        |——————————————————|——————| step | a    | b    |
-        |          enter b |  b   | step | a    | b    |
-        |       after step |  b   | step | a    | b    |
-        |                  |  b   | ∅    | ∅    | ∅    |
+        │                  │  a   │ ╳╳╳╳ │ ╳╳╳╳ │ ╳╳╳╳ │
+        │      before step │  a   │ step │ a    │ b    │
+        │          leave a │  a   │ step │ a    │ b    │
+        │──────────────────│──────│ step │ a    │ b    │
+        │          enter b │  b   │ step │ a    │ b    │
+        │       after step │  b   │ step │ a    │ b    │
+        │                  │  b   │ ╳╳╳╳ │ ╳╳╳╳ │ ╳╳╳╳ │
           ...
-        |                  |  b   | ∅    | ∅    | ∅    |
-        |      before step |  b   | step | b    | c    |
-        |          leave b |  b   | step | b    | c    |
-        |——————————————————|——————| step | b    | c    |
-        |          enter c |  c   | step | b    | c    |
-        |       after step |  c   | step | b    | c    |
-        |                  |  c   | ∅    | ∅    | ∅    |
+        │                  │  b   │ ╳╳╳╳ │ ╳╳╳╳ │ ╳╳╳╳ │
+        │      before step │  b   │ step │ b    │ c    │
+        │          leave b │  b   │ step │ b    │ c    │
+        │──────────────────│──────│ step │ b    │ c    │
+        │          enter c │  c   │ step │ b    │ c    │
+        │       after step │  c   │ step │ b    │ c    │
+        │                  │  c   │ ╳╳╳╳ │ ╳╳╳╳ │ ╳╳╳╳ │
           ...
-        |                  |  c   | ∅    | ∅    | ∅    |
-        |                  |      |      |      |      |
+        │                  │  c   │ ╳╳╳╳ │ ╳╳╳╳ │ ╳╳╳╳ │
+        │                  │      │      │      │      │
   ```
 
   ```
