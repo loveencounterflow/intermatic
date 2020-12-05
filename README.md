@@ -274,9 +274,9 @@ fsm.goto 'lit'
         |          enter a |      | step | ?    | a    |
         |                  |  a   | step | ?    | a    |
         |       after step |      | step | ?    | a    |
-        |                  |      |  ⦼  |      |      |
-        |                  |      |  ⦼  |      |      |
-        |                  |      |  ⦼  |      |      |
+        |                  |      |  ∅   |      |      |
+        |                  |      |  ∅   |      |      |
+        |                  |      |  ∅   |      |      |
         |      before step |      | step | a    | b    |
         |          leave a |      | step | a    | b    |
         |——————————————————|——————| step | a    | b    |
