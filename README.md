@@ -224,36 +224,45 @@ fsm.goto 'lit'
 * [ ] logically there are 2 points in time when an action can take place, *before* a move occurs and *after*
   it has occurred. At
  ```
-          before enter a |     |      |
-       ——————————————————|—————|      |——————————————————
-                         |  a  |      |
-                         |     |      | after do step
-                         |     |      | after enter a
-                         |     |——————|
-                         |     |//////|
-                         |     |——————|
-          before do step |     |      |
-                         |     | step |
-          before leave a |     |      |
-          before enter b |     |      |
-       ——————————————————|—————|      |——————————————————
-                         |  b  |      |
-                         |     |      | after do step
-                         |     |      | after enter b
-                         |     |——————|
-                         |     |//////|
-                         |     |——————|
-          before do step |     |      |
-                         |     | step |
-          before leave b |     |      |
-          before enter c |     |      |
-       ——————————————————|—————|      |——————————————————
-                         |  c  |      |
-                         |     |      | after do step
-                         |     |      | after enter c
-                         |     |——————|
-                         |     |//////|
-                         |     |——————|
+
+
+        +——————————————————+——————+——————+——————————————————+——————+——————+
+        |                  |      |      |                  |      |      |
+        | actions before   |lstate| verb | actions after    | dpar | dest |
+        |                  |      |      |                  |      |      |
+        +==================+======+======+==================+======+======+
+        |                  |      |      |                  |      |      |
+        |   before enter a |      |      |                  |      |      |
+        |——————————————————|——————|      |——————————————————|      |      |
+        |                  |  a   |      |                  |      |      |
+        |                  |      |      | after do step    |      |      |
+        |                  |      |      | after enter a    |      |      |
+        |                  |      |——————|                  |      |      |
+        |                  |      |//////|                  |      |      |
+        |                  |      |——————|                  |      |      |
+        |   before do step |      |      |                  |      |      |
+        |                  |      | step |                  |      |      |
+        |   before leave a |      |      |                  |      |      |
+        |   before enter b |      |      |                  |      |      |
+        |——————————————————|——————|      |——————————————————|      |      |
+        |                  |  b   |      |                  |      |      |
+        |                  |      |      | after do step    |      |      |
+        |                  |      |      | after enter b    |      |      |
+        |                  |      |——————|                  |      |      |
+        |                  |      |//////|                  |      |      |
+        |                  |      |——————|                  |      |      |
+        |   before do step |      |      |                  |      |      |
+        |                  |      | step |                  |      |      |
+        |   before leave b |      |      |                  |      |      |
+        |   before enter c |      |      |                  |      |      |
+        |——————————————————|——————|      |——————————————————|      |      |
+        |                  |  c   |      |                  |      |      |
+        |                  |      |      | after do step    |      |      |
+        |                  |      |      | after enter c    |      |      |
+        |                  |      |——————|                  |      |      |
+        |                  |      |//////|                  |      |      |
+        |                  |      |——————|                  |      |      |
+        |                  |      |      |                  |      |      |
   ```
 
   ```
