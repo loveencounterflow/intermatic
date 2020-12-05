@@ -200,6 +200,15 @@ fsm.goto 'lit'
 
 # To Do
 
+* [X] implement `fsm.tryto 't'` to call trigger `t` only when allowed, avoiding calls to `fail()`
+* [X] implement `fsm.can 't'` to test whether trigger `t` may be emitted from current state
+* [X] implement attribute-access (cf. `Multimix`) for `goto`, `tryto` such that `fsm.goto 's'`, `fsm.tryto
+  't'` is equivalent to `fsm.goto.s()`, `fsm.tryto.t()`
+* [X] remove `s`/`trigger` argument from event handlers
+* [X] Implement computed property `move` as `{ verb, dpar, dest, }`
+
+------------------------------------------------------------------------------------------------------------
+
 * [ ] implement `goto` with list of target (or source and target?) states
 * [ ] implement `toggle`
 * [ ] implement trigger cancellation (using API call, not return value)
@@ -208,22 +217,15 @@ fsm.goto 'lit'
 * [ ] percolate/bubble triggers (from sub to up? both directions? all FSMs in tree?)
 * [ ] when one trigger bubbles through the FSMs, how to tell when that trigger has been processed? Two
   consecutive events could have same name. Use ID?
-* [X] implement `fsm.tryto 't'` to call trigger `t` only when allowed, avoiding calls to `fail()`
-* [X] implement `fsm.can 't'` to test whether trigger `t` may be emitted from current state
-* [X] implement attribute-access (cf. `Multimix`) for `goto`, `tryto` such that `fsm.goto 's'`, `fsm.tryto
-  't'` is equivalent to `fsm.goto.s()`, `fsm.tryto.t()`
 * [ ] implement cascading events, such that `top.start()` implicitly calls `start()` on all sub-FSMs
 * [ ] asynchronous moves
 * [ ] equivalents to `setTimeout()`, `setInterval()`?
 * [ ] make symbolic `'*'` equivalent to `'any'`
 * [ ] rename FSMD attribute `triggers` to `moves`, use `{ verb, dpar, dest, }` format
-* [X] remove `s`/`trigger` argument from event handlers
 * [ ] state to be separated into three computed properties:
   * `lstate`(?) for local state: just the text (value) indicating the state of that component
   * `clstate`(?) for compound state with local states: object with `lstate` attributes for FSM and sub-FSMs
   * `ccstate`(?) more complete state including history (?)
-
-  In addition, `move` property/ies to reflect `verb`, `dpar`, `dest` &c.
 
 <!--
 * [ ] consider using more flexible, clearer(?) syntax where triggers may be grouped as seen fit, ex.:
