@@ -8,6 +8,7 @@
 **Table of Contents**  *generated with [DocToc](https://github.com/thlorenz/doctoc)*
 
   - [Finite State Machine Description Objects (FSMDs)](#finite-state-machine-description-objects-fsmds)
+- [Lifecycle of Intermatic FSMs](#lifecycle-of-intermatic-fsms)
 - [To Do](#to-do)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -201,6 +202,93 @@ fsm.toggle()
 fsm.goto 'lit'
 ```
 
+# Lifecycle of Intermatic FSMs
+
+```
+  1  ┌────────────────────╥────────────────────────────────────────────────┐
+  2  │               User ║ FSM                                            │
+  3  │                    ╟────────────────────┬──────┬──────┬──────┬──────┤
+  4  │                    ║                    │      │      │      │      │
+  5  │                    ║            actions │lstate│ verb │ dpar │ dest │
+  6  │                    ║                    │      │      │      │      │
+  7  │════════════════════║════════════════════╪══════╪══════╪══════╪══════│
+  8  │                    ║                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+  9  │────────────────────║────────────────────│ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 10  │          φ.start() ║                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 11  │                    ║                    │ void │ start│ void │ a    │
+ 12  │                    ║ φ.start.before[]() │ void │ start│ void │ a    │
+ 13  │                    ║   φ.void.leave[]() │ void │ start│ void │ a    │
+ 14  │                    ║────────────────────│──────│ start│ void │ a    │
+ 15  │                    ║      φ.a.enter[]() │ a    │ start│ void │ a    │
+ 16  │                    ║  φ.start.after[]() │ a    │ start│ void │ a    │
+ 17  │────────────────────║────────────────────│ a    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 18  │           φ.step() ║                    │ a    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 19  │                    ║                    │ a    │ step │ a    │ b    │
+ 20  │                    ║  φ.step.before[]() │ a    │ step │ a    │ b    │
+ 21  │                    ║      φ.a.leave[]() │ a    │ step │ a    │ b    │
+ 22  │                    ║────────────────────│──────│ step │ a    │ b    │
+ 23  │                    ║      φ.b.enter[]() │ b    │ step │ a    │ b    │
+ 24  │                    ║   φ.step.after[]() │ b    │ step │ a    │ b    │
+ 25  │────────────────────║────────────────────│ b    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 26  │           φ.step() ║                    │ b    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 27  │                    ║                    │ b    │ step │ b    │ c    │
+ 28  │                    ║  φ.step.before[]() │ b    │ step │ b    │ c    │
+ 29  │                    ║      φ.b.leave[]() │ b    │ step │ b    │ c    │
+ 30  │                    ║────────────────────│──────│ step │ b    │ c    │
+ 31  │                    ║      φ.c.enter[]() │ c    │ step │ b    │ c    │
+ 32  │                    ║   φ.step.after[]() │ c    │ step │ b    │ c    │
+ 33  │────────────────────║────────────────────│ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 34  │           φ.step() ║                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 35  │                    ║                    │ c    │ step │ c    │ c    │
+ 36  │                    ║  φ.step.before[]() │ c    │ step │ c    │ c    │
+ 37  │                    ║       φ.c.stay[]() │ c    │ step │ c    │ c    │
+ 38  │                    ║   φ.step.after[]() │ c    │ step │ c    │ c    │
+ 39  │────────────────────║────────────────────│ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 40  │           φ.stop() ║                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 41  │                    ║                    │ c    │ stop │ c    │ void │
+ 42  │                    ║  φ.stop.before[]() │ c    │ stop │ c    │ void │
+ 43  │                    ║      φ.c.leave[]() │ c    │ stop │ c    │ void │
+ 44  │                    ║────────────────────│──────│ stop │ c    │ void │
+ 45  │                    ║   φ.stop.after[]() │ void │ stop │ c    │ void │
+ 46  │                    ║                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 47  └────────────────────╨────────────────────┴──────┴──────┴──────┴──────┘
+```
+
+Note: in the above, `x[]()` denotes a call to all the functions in the list of functions identified by `x`.
+`x[]()` corresponds to `x: [(->)]` in the below FSMD.
+
+```
+fsmd =
+  name: 'φ'
+  moves: [
+    start:    [ 'void', 'a', ]
+    step:     [ 'a', 'b', 'c', 'c', ]
+    stop:     [ 'c', 'void', ]
+  start:
+    before:   [(->)]
+    after:    [(->)]
+  step:
+    before:   [(->)]
+    after:    [(->)]
+  stop:
+    before:   [(->)]
+    after:    [(->)]
+  a:
+    enter:    [(->)]
+    leave:    [(->)]
+  b:
+    enter:    [(->)]
+    leave:    [(->)]
+  c:
+    enter:    [(->)]
+    stay:     [(->)]
+    leave:    [(->)]
+```
+
+NOTE: in the above, `[(->)]` denotes a value consisting of either single function or a (possibly empty) list
+of functions.
+
+
 # To Do
 
 * [X] implement `fsm.tryto 't'` to call trigger `t` only when allowed, avoiding calls to `fail()`
@@ -216,86 +304,13 @@ fsm.goto 'lit'
   else a single function that compiles into a list with one element)
 * [ ] **REJECTED** should we unify `before` and `enter`, `after` and `leave`? Possible setup uses 4 categories as opposed
   to the 5 now in use (`before`, `after`, `enter`, `leave`, `stay`):
-  * `before`—for move and state actions, always called before move is started or state is entered
+  * `before`—for trigger actions, called before move is started
   * `stay`—for state actions, only called when `dpar` equals `dest`
-  * `change`—for state actions, only called when `dpar` is different from `dest`
-  * `after`—for move and state actions, always called after move or state action has finished
+  * `enter`, `leave`—for state actions, only called when `dpar` is different from `dest`
+  * `after`—for trigger actions, called after move has finished
 
 * [ ]
 
-```
-┌────────────────────╥────────────────────────────────────────────────┐
-│               User ║ FSM                                            │
-│                    ╟────────────────────┬──────┬──────┬──────┬──────┤
-│                    ║                    │      │      │      │      │
-│                    ║            actions │lstate│ verb │ dpar │ dest │
-│                    ║                    │      │      │      │      │
-│════════════════════║════════════════════╪══════╪══════╪══════╪══════│
-│                    ║                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-│────────────────────║────────────────────│ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-│          φ.start() ║                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-│                    ║                    │ void │ start│ void │ a    │
-│                    ║ φ.start.before[]() │ void │ start│ void │ a    │
-│                    ║   φ.void.leave[]() │ void │ start│ void │ a    │
-│                    ║────────────────────│──────│ start│ void │ a    │
-│                    ║      φ.a.enter[]() │ a    │ start│ void │ a    │
-│                    ║  φ.start.after[]() │ a    │ start│ void │ a    │
-│────────────────────║────────────────────│ a    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-│           φ.step() ║                    │ a    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-│                    ║                    │ a    │ step │ a    │ b    │
-│                    ║  φ.step.before[]() │ a    │ step │ a    │ b    │
-│                    ║      φ.a.leave[]() │ a    │ step │ a    │ b    │
-│                    ║────────────────────│──────│ step │ a    │ b    │
-│                    ║      φ.b.enter[]() │ b    │ step │ a    │ b    │
-│                    ║   φ.step.after[]() │ b    │ step │ a    │ b    │
-│────────────────────║────────────────────│ b    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-│           φ.step() ║                    │ b    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-│                    ║                    │ b    │ step │ b    │ c    │
-│                    ║  φ.step.before[]() │ b    │ step │ b    │ c    │
-│                    ║      φ.b.leave[]() │ b    │ step │ b    │ c    │
-│                    ║────────────────────│──────│ step │ b    │ c    │
-│                    ║      φ.c.enter[]() │ c    │ step │ b    │ c    │
-│                    ║   φ.step.after[]() │ c    │ step │ b    │ c    │
-│────────────────────║────────────────────│ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-│           φ.step() ║                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-│                    ║                    │ c    │ step │ c    │ c    │
-│                    ║  φ.step.before[]() │ c    │ step │ c    │ c    │
-│                    ║       φ.c.stay[]() │ c    │ step │ c    │ c    │
-│                    ║   φ.step.after[]() │ c    │ step │ c    │ c    │
-│────────────────────║────────────────────│ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-│           φ.stop() ║                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-│                    ║                    │ c    │ stop │ c    │ void │
-│                    ║  φ.stop.before[]() │ c    │ stop │ c    │ void │
-│                    ║      φ.c.leave[]() │ c    │ stop │ c    │ void │
-│                    ║────────────────────│──────│ stop │ c    │ void │
-│                    ║   φ.stop.after[]() │ void │ stop │ c    │ void │
-│                    ║                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-└────────────────────╨────────────────────┴──────┴──────┴──────┴──────┘
-```
-
-```
-fsmd =
-  name: 'φ'
-  triggers: [
-    [ 'start',  'void', 'a',    ],
-    [ 'step',   'a',    'b',    ],
-    [ 'step',   'b',    'c',    ],
-    [ 'step',   'c',    'c',    ],
-    [ 'stop',   'c',    'void', ], ]
-  start:
-    before:   [ ( -> ), ..., ]        # NOTE: single function or list of functions
-    after:    [ ( -> ), ..., ]        # NOTE: single function or list of functions
-  a:
-    enter:    [ ( -> ), ..., ]        # NOTE: single function or list of functions
-    leave:    [ ( -> ), ..., ]        # NOTE: single function or list of functions
-  b:
-    enter:    [ ( -> ), ..., ]        # NOTE: single function or list of functions
-    leave:    [ ( -> ), ..., ]        # NOTE: single function or list of functions
-  c:
-    enter:    [ ( -> ), ..., ]        # NOTE: single function or list of functions
-    stay:     [ ( -> ), ..., ]        # NOTE: single function or list of functions
-    leave:    [ ( -> ), ..., ]        # NOTE: single function or list of functions
-```
 
 
 
@@ -311,7 +326,12 @@ fsmd =
 * [ ] asynchronous moves
 * [ ] equivalents to `setTimeout()`, `setInterval()`?
 * [ ] make symbolic `'*'` equivalent to `'any'`
-* [ ] rename FSMD attribute `triggers` to `moves`, use `{ verb, dpar, dest, }` format
+* [ ] rename FSMD attribute `triggers` to `moves`
+* [ ] one of the following:
+  * [ ] use `{ verb, dpar, dest, }` format
+  * [ ] use lists with optionally more than three elements; a `step` action that goes from `a` to `b` to
+    `c`, then stays at `c` would be `[ 'step', 'a', 'b', 'c', 'c' ]`; a cycler would be `[ 'cycle', 'a',
+    'b', 'c', 'a', ]`; this would obsolete FSMD attribute `cyclers`
 * [ ] state to be separated into three computed properties:
   * `lstate`(?) for local state: just the text (value) indicating the state of that component
   * `clstate`(?) for compound state with local states: object with `lstate` attributes for FSM and sub-FSMs
