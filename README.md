@@ -116,11 +116,28 @@ alpha_btn:
 * **departures** (`dpar`), **destinations** (`dest`) are the local states where a transition─a *move*─starts
   and ends, respectively;
 * **verbs** are what triggers an FSM to change state.
-* A **move** (a.k.a. *transition*) is a triplet of `( verb, dpar, dest, )` (think: "to `melt` (a
-  substance) means going from `solid` to `liquid` state", which describes the transition `( 'melt', 'solid',
-  'liquid', )`). A given verb may connect a number of departures and destinations, and a given verb may
-  connect several departures with several destinations; however, given a verb and a departure state, there
-  can only be up to one destination state.
+* Specifically, the methods that are compiled from the verbs found as keys in an FSMD's `moves` object are
+  called **triggers** because they are used to trigger a single transition from one state to another state.
+* Triggers accept any number of arguments; these will be passed into the state and trigger actions.
+* **State Actions** are methods that are called when a state is entered or left.
+* **Trigger Actions** are methods that are called before or after a trigger has caused a transition.
+* A **trajectory** is a (possibly empty) list of local states. It must satisfy a number of constraints:
+  * A trajectory list must have either no elements or more than one element.
+  * The elements in a trajectory list are interpreted in a pair-wise fashion such that the `i`th element
+    becomes the departure and the `i + 1`th element the destination of an **elemntary trajectory** a.k.a. a
+    **transition**. For example, the trajectory `[ 'a', 'b', 'c', ]` contains the transitions from departure
+    `a` to destination `b`, and the transition from `b` to `c`.
+  * It is not allowed to repeat any element of a trajectory except for the case of circular trajectory
+    (**cycles**) where the *last* element repeats the first element. For example, `[ 'a', 'b', 'c', 'a', ]`
+    denotes a trajectory from `a` through `b` through `c`, and then from `c` back to `a`.
+  * The first element of a trajectory list (and only the first one) may be the catch-all symbol (written as
+    `'*'` or `'any'`); this signifies that the verb may be called in any state and will then transition to
+    the second element in the list.
+* A **move** is a key/value pair whose key is a verb and whose value is a trajectory.
+
+* A given verb may connect a number of departures and destinations, and a given verb may connect several
+  departures with several destinations; however, given a verb and a departure state, there can only be up to
+  one destination state.
 
 * **actions** are (synchronous or asynchronous) functions that are called in response to actions having taken
   or about to take place
@@ -216,46 +233,46 @@ fsm.goto 'lit'
   9  │────────────────────║────────────────────│ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
  10  │          φ.start() ║                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
  11  │                    ║                    │ void │ start│ void │ a    │
- 12  │                    ║ φ.start.before[]() │ void │ start│ void │ a    │
- 13  │                    ║   φ.void.leave[]() │ void │ start│ void │ a    │
+ 12  │                    ║ φ.before.start[]() │ void │ start│ void │ a    │
+ 13  │                    ║   φ.leave.void[]() │ void │ start│ void │ a    │
  14  │                    ║────────────────────│──────│ start│ void │ a    │
- 15  │                    ║      φ.a.enter[]() │ a    │ start│ void │ a    │
+ 15  │                    ║      φ.enter.a[]() │ a    │ start│ void │ a    │
  16  │                    ║  φ.start.after[]() │ a    │ start│ void │ a    │
  17  │────────────────────║────────────────────│ a    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
  18  │           φ.step() ║                    │ a    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
  19  │                    ║                    │ a    │ step │ a    │ b    │
- 20  │                    ║  φ.step.before[]() │ a    │ step │ a    │ b    │
- 21  │                    ║      φ.a.leave[]() │ a    │ step │ a    │ b    │
+ 20  │                    ║  φ.before.step[]() │ a    │ step │ a    │ b    │
+ 21  │                    ║      φ.leave.a[]() │ a    │ step │ a    │ b    │
  22  │                    ║────────────────────│──────│ step │ a    │ b    │
- 23  │                    ║      φ.b.enter[]() │ b    │ step │ a    │ b    │
- 24  │                    ║   φ.step.after[]() │ b    │ step │ a    │ b    │
+ 23  │                    ║      φ.enter.b[]() │ b    │ step │ a    │ b    │
+ 24  │                    ║   φ.after.step[]() │ b    │ step │ a    │ b    │
  25  │────────────────────║────────────────────│ b    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
  26  │           φ.step() ║                    │ b    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
  27  │                    ║                    │ b    │ step │ b    │ c    │
- 28  │                    ║  φ.step.before[]() │ b    │ step │ b    │ c    │
- 29  │                    ║      φ.b.leave[]() │ b    │ step │ b    │ c    │
+ 28  │                    ║  φ.before.step[]() │ b    │ step │ b    │ c    │
+ 29  │                    ║      φ.leave.b[]() │ b    │ step │ b    │ c    │
  30  │                    ║────────────────────│──────│ step │ b    │ c    │
- 31  │                    ║      φ.c.enter[]() │ c    │ step │ b    │ c    │
- 32  │                    ║   φ.step.after[]() │ c    │ step │ b    │ c    │
+ 31  │                    ║      φ.enter.c[]() │ c    │ step │ b    │ c    │
+ 32  │                    ║   φ.after.step[]() │ c    │ step │ b    │ c    │
  33  │────────────────────║────────────────────│ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
  34  │           φ.step() ║                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
  35  │                    ║                    │ c    │ step │ c    │ c    │
- 36  │                    ║  φ.step.before[]() │ c    │ step │ c    │ c    │
- 37  │                    ║       φ.c.stay[]() │ c    │ step │ c    │ c    │
- 38  │                    ║   φ.step.after[]() │ c    │ step │ c    │ c    │
+ 36  │                    ║  φ.before.step[]() │ c    │ step │ c    │ c    │
+ 37  │                    ║       φ.stay.c[]() │ c    │ step │ c    │ c    │
+ 38  │                    ║   φ.after.step[]() │ c    │ step │ c    │ c    │
  39  │────────────────────║────────────────────│ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
  40  │           φ.stop() ║                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
  41  │                    ║                    │ c    │ stop │ c    │ void │
- 42  │                    ║  φ.stop.before[]() │ c    │ stop │ c    │ void │
- 43  │                    ║      φ.c.leave[]() │ c    │ stop │ c    │ void │
+ 42  │                    ║  φ.before.stop[]() │ c    │ stop │ c    │ void │
+ 43  │                    ║      φ.leave.c[]() │ c    │ stop │ c    │ void │
  44  │                    ║────────────────────│──────│ stop │ c    │ void │
  45  │                    ║   φ.stop.after[]() │ void │ stop │ c    │ void │
  46  │                    ║                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
  47  └────────────────────╨────────────────────┴──────┴──────┴──────┴──────┘
 ```
 
-Note: in the above, `x[]()` denotes a call to all the functions in the list of functions identified by `x`.
-`x[]()` corresponds to `x: [(->)]` in the below FSMD.
+*Note: in the above, `x[]()` denotes a call to all the functions in the list of functions identified by `x`.
+`x[]()` corresponds to `x: [(->)]` in the below FSMD.*
 
 ```
 fsmd =
@@ -285,8 +302,10 @@ fsmd =
     leave:    [(->)]
 ```
 
-NOTE: in the above, `[(->)]` denotes a value consisting of either single function or a (possibly empty) list
-of functions.
+<figcaption>This is a caption. This is a caption. This is a caption. This is a caption.</figcaption>
+
+*NOTE: in the above, `[(->)]` denotes a value consisting of either single function or a (possibly empty) list
+of functions.*
 
 
 # To Do
