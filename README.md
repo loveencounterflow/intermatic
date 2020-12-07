@@ -302,10 +302,8 @@ fsmd =
     leave:    [(->)]
 ```
 
-<figcaption>This is a caption. This is a caption. This is a caption. This is a caption.</figcaption>
-
-*NOTE: in the above, `[(->)]` denotes a value consisting of either single function or a (possibly empty) list
-of functions.*
+> *NOTE: in the above, `[(->)]` denotes a value consisting of either single function or a (possibly empty)
+> list of functions.*
 
 
 # To Do
