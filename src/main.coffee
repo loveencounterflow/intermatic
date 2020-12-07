@@ -3,16 +3,46 @@
 
 
 ############################################################################################################
+types                     = new ( require 'intertype' ).Intertype()
+{ validate
+  isa
+  declare }               = types.export()
 freeze                    = Object.freeze
 unless globalThis.debug?  then debug  = console.debug
 unless globalThis.rpr?    then rpr    = JSON.stringify
+
+#===========================================================================================================
+# TYPES
+#-----------------------------------------------------------------------------------------------------------
+declare 'trajectory', tests:
+  "x isa list of texts":      ( x ) -> @isa.list_of 'text', x
+  "length is 0 or > 1":       ( x ) -> ( x.length is 0 ) or ( x.length > 1 )
+
+#-----------------------------------------------------------------------------------------------------------
+declare 'verb', tests:
+  "x isa nonempty_text":      ( x ) -> @isa.nonempty_text x
+  # "x is not a reserved word": ( x ) ->
+  # "x is not an lstate": ( x ) ->
+  # or test against catalog of known verbs
+
+#-----------------------------------------------------------------------------------------------------------
+declare 'lstate', tests:
+  "x isa nonempty_text":      ( x ) -> @isa.nonempty_text x
+  # "x is not a reserved word": ( x ) ->
+  # "x is not an verb": ( x ) ->
+  # or test against catalog of known verbs
+
+#-----------------------------------------------------------------------------------------------------------
+declare 'actions', tests:
+  ### TAINT allow async functions ###
+  "x isa list of functions":      ( x ) -> @isa.list_of 'function', x
 
 
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
 set = ( target, key, value ) ->
-  if target[ key ]?
+  if target[ key ] isnt undefined
     throw new Error "^intermatic/set@776^ name collision: #{rpr key}"
   target[ key ] = value
   return value
