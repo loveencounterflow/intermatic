@@ -65,17 +65,23 @@ class Intermatic
   #---------------------------------------------------------------------------------------------------------
   constructor: ( fsmd ) ->
     # validate.fsmd fsmd
+    # @_types             = types
     @_tmp               = {}
     @_tmp.fsmd          = { fsmd..., }
     @_tmp.known_names   = new Set()
-    @moves              = {}
+    # @_mnames            = new Set()
+    @moves              = null
     @cascades           = null
     @lstates            = null
     @fsm_names          = []
     @has_subfsms        = false
+    @_stage             = null
     @_lstate            = 'void'
-    @trigger_actions    = freeze [ 'before', 'after', ]
-    @state_actions      = freeze [ 'enter', 'leave', 'stay', ]
+    @_trigger_stages    = freeze [ 'before', 'after', ]
+    @_state_stages      = freeze [ 'entering', 'leaving', 'keeping', ]
+    do =>
+      for stages in [ @_trigger_stages, @_state_stages, ]
+        set @, stage, {} for stage in stages
     @data               = null
     @history_length     = 1
     @_prv_lstates       = [ @_lstate, ]
@@ -88,7 +94,8 @@ class Intermatic
     @_compile_fail()
     # @_compile_cyclers()
     @_compile_moves()
-    @_compile_transitioners()
+    @_compile_triggers()
+    @_compile_actions()
     # @_compile_handlers()
     # @_compile_goto()
     # @_compile_can()
@@ -144,10 +151,19 @@ class Intermatic
         freeze target
         return freeze R
     #-------------------------------------------------------------------------------------------------------
-    dpar: get: -> @_nxt_dpar
-    dest: get: -> @_nxt_dest
-    verb: get: -> @_nxt_verb
-    move: get: -> freeze { verb: @verb, dpar: @dpar, dest:@dest, }
+    stage:  get: -> @_stage
+    verb:   get: -> @_nxt_verb
+    dpar:   get: -> @_nxt_dpar
+    dest:   get: -> @_nxt_dest
+    #-------------------------------------------------------------------------------------------------------
+    move:   get: ->
+      R       = {}
+      R.stage = v if ( v = @stage )?
+      R.verb  = v if ( v = @verb  )?
+      R.dpar  = v if ( v = @dpar  )?
+      R.dest  = v if ( v = @dest  )?
+      return freeze R
+    #-------------------------------------------------------------------------------------------------------
     fsms: get: -> ( @[ subfsm_name ] for subfsm_name in @fsm_names )
     #-------------------------------------------------------------------------------------------------------
     changed:
@@ -182,28 +198,29 @@ class Intermatic
 
   #---------------------------------------------------------------------------------------------------------
   _compile_moves: ->
-    starred       = {}
+    @_tmp.known_names.add 'moves'
+    # starred       = {}
     lstates       = new Set [ 'void', ]
-    moves         = @_tmp.fsmd.moves = { ( @_tmp.fsmd.moves ? {} )..., }
-    verbs         = ( verb for verb of moves )
+    fsmd_moves    = @_tmp.fsmd.moves = { ( @_tmp.fsmd.moves ? {} )..., }
+    @moves        = {}
+    verbs         = ( verb for verb of fsmd_moves )
     #.......................................................................................................
-    unless moves.start?
-      ### TAINT validate.nonempty_text moves.start ###
+    unless fsmd_moves.start?
+      ### TAINT validate.nonempty_text fsmd_moves.start ###
       ### TAINT validate.nonempty_list verbs ###
-      ### TAINT validate.nonempty_list moves[ verbs[ 0 ] ][ 0 ] ###
-      first_lstate  = moves[ verbs[ 0 ] ][ 0 ] ? 'void'
-      moves.start   = [ 'void', first_lstate, ]
+      ### TAINT validate.nonempty_list fsmd_moves[ verbs[ 0 ] ][ 0 ] ###
+      first_lstate  = fsmd_moves[ verbs[ 0 ] ][ 0 ] ? 'void'
+      fsmd_moves.start   = [ 'void', first_lstate, ]
     #.......................................................................................................
-    for verb, trajectory of moves
-      #.....................................................................................................
+    for verb, trajectory of fsmd_moves
       ### If the verb is `start`, then value may be just the name of the start verb instead of a list ###
-      ### TAINT validate.nonempty_text trajectory ###
-      if ( verb is 'start' ) and ( typeof trajectory is 'string' )
+      validate.verb verb
+      if ( verb is 'start' ) and ( not isa.list trajectory )
         trajectory = [ 'void', trajectory, ]
+      validate.trajectory trajectory
+      continue unless trajectory.length > 0
       #.....................................................................................................
       for tidx in [ 0 ... trajectory.length - 1 ]
-        ### TAINT validate.list_of.list triplet ###
-        ### TAINT validate.verb verb ###
         ### TAINT validate that free of collision ###
         dpar  = trajectory[ tidx ]
         dest  = trajectory[ tidx + 1 ]
@@ -216,22 +233,50 @@ class Intermatic
     return null
 
   #---------------------------------------------------------------------------------------------------------
-  _compile_transitioners: ->
-    @_tmp.known_names.add 'moves'
+  _compile_triggers: ->
     for verb, dests_by_deps of @moves
       do ( verb, dests_by_deps ) =>
-        transitioner = @_get_transitioner verb, dests_by_deps
-        ### Attach lifecycle handlers to transitioner such that `fsmd[verb].before` becomes
-        `fsm[verb].before` and so on: ###
-        for lifecycle, handlers of ( @_tmp.fsmd[ verb ] ? {} )
-          handlers = [ handlers, ] unless ( Array.isArray handlers )
-          set transitioner, lifecycle, handlers
-        set @, verb, transitioner
+        trigger = @_get_trigger verb, dests_by_deps
+        set @, verb, trigger
         @_tmp.known_names.add verb
     return null
 
   #---------------------------------------------------------------------------------------------------------
-  _get_transitioner: ( verb, dests_by_deps = null ) ->
+  _compile_actions: ->
+    #.......................................................................................................
+    for stage in @_trigger_stages
+      @_tmp.known_names.add stage
+      continue unless ( source = @_tmp.fsmd[ stage ] )?
+      target = @[ stage ]
+      for verb, actions of source
+        ### TAINT validate.verb verb; esp validate not an lstate ###
+        validate.verb verb
+        actions = [ actions, ] unless isa.list actions
+        validate.actions actions
+        set target, verb, actions
+    #.......................................................................................................
+    for stage in @_state_stages
+      @_tmp.known_names.add stage
+      continue unless ( source = @_tmp.fsmd[ stage ] )?
+      target = @[ stage ]
+      for lstate, actions of source
+        ### TAINT validate.lstate lstate; esp validate not a verb ###
+        validate.lstate lstate
+        actions = [ actions, ] unless isa.list actions
+        validate.actions actions
+        set target, lstate, actions
+    #.......................................................................................................
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _call_actions: ( stage, verb_or_lstate, P ) ->
+    @_stage = stage
+    return null unless ( transitioners = @[ stage ]?[ verb_or_lstate ] )?
+    transitioner.apply @, P for transitioner in transitioners
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _get_trigger: ( verb, dests_by_deps = null ) ->
     ### TAINT add extra arguments P ###
     ### TAINT too much logic to be done at in run time, try to precompile more ###
     return transitioner = ( P... ) =>
@@ -259,35 +304,32 @@ class Intermatic
       #   continue unless ( aname is 'any' ) or ( aname is XXXX )
       #   for action in actions
       #     XXXXX
-      debug '^333344^', { verb, dpar, dest, changed, }
-      debug '^333344^', @[ verb ]
-      debug '^333344^', @[ verb ]?.before
+      debug '^333344^', "{ verb, dpar, dest, changed, } ", { verb, dpar, dest, changed, }
+      debug '^333344^', "@[ verb ]                      ", @[ verb ]
+      debug '^333344^', "@before.any                    ", @before.any
+      debug '^333344^', "@before.#{verb}                ", @before[   verb ]
+      debug '^333344^', "@leaving.#{dpar}               ", @leaving[  dpar ]
+      debug '^333344^', "@entering.#{dest}              ", @entering[ dest ]
+      debug '^333344^', "@after.#{verb}                 ", @after[    verb ]
       # @before.any?              P...
       # @before.change?           P... if changed
-      call_handlers = ( handlers, P... ) =>
-        return null unless handlers?
-        handler.apply @, P for handler in handlers
-        return null
-      call_handlers @[ verb ]?.before, P...
-      # #.....................................................................................................
-      # @leave.any?               P... if changed
-      # @leave[ dpar ]?           P... if changed
-      # #.....................................................................................................
-      # @lstate = dest if changed
-      # #.....................................................................................................
-      # @stay.any?                P... if not changed
-      # @stay[ dest ]?            P... if not changed
-      # @enter.any?               P... if changed
-      # @enter[ dest ]?           P... if changed
-      # #.....................................................................................................
-      # @after[ verb ]?           P...
-      # @after.change?            P... if changed
-      # @after.any?               P...
+      #.....................................................................................................
+      @_call_actions 'before',    'any',      P
+      @_call_actions 'before',    'change',   P if      changed
+      @_call_actions 'before',    verb,       P
+      @_call_actions 'leaving',   dpar,       P if      changed
+      @lstate                   = dest          if      changed
+      @_call_actions 'keeping',   dpar,       P if  not changed
+      @_call_actions 'entering',  dest,       P if      changed
+      @_call_actions 'after',     verb,       P
+      @_call_actions 'after',     'change',   P if      changed
+      @_call_actions 'after',     'any',      P
       #.....................................................................................................
       ### NOTE At this point, the transition has finished, so we reset the `@_nxt_*` attributes: ###
-      @_nxt_verb                = null
-      @_nxt_dest                = null
-      @_nxt_dpar                = null
+      @_stage     = null
+      @_nxt_verb  = null
+      @_nxt_dest  = null
+      @_nxt_dpar  = null
       #.....................................................................................................
       return null
 
@@ -296,7 +338,7 @@ class Intermatic
   #   ### TAINT add handlers for trigger, change ###
   #   ### TAINT check names against reserved ###
   #   try
-  #     for category in [ 'before', 'enter', 'stay', 'leave', 'after', ]
+  #     for category in [ 'before', 'entering', 'keeping', 'leaving', 'after', ]
   #       @_tmp.known_names.add category
   #       for name, handler of @_tmp.fsmd[ category ] ? {}
   #         @[ category ][ name ] = handler.bind @
@@ -311,7 +353,7 @@ class Intermatic
   #   if ( goto = @_tmp.fsmd.goto )?
   #     unless goto is '*'
   #       throw new Error "^intermatic/_compile_handlers@776^ expected '*' for key `goto`, got #{rpr goto}"
-  #     transitioner  = @_get_transitioner 'goto', null
+  #     transitioner  = @_get_trigger 'goto', null
   #     goto          = ( dest, P... ) => transitioner dest, P...
   #     for dest in @lstates
   #       do ( dest ) =>
