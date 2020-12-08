@@ -143,24 +143,11 @@ class Intermatic
     #-------------------------------------------------------------------------------------------------------
     cstate:
       get: ->
-        R                 = {}
-        R.path            = @path
+        R                 = Object.assign {}, @move
+        R.path            = x if ( x = @path )?
         R.lstate          = @lstate
-        R.verb            = x if ( x = @verb    )?
-        R.dpar            = x if ( x = @dpar    )?
-        R.dest            = x if ( x = @dest    )?
-        R.changed         = x if ( x = @changed )? and x
-        R.failed          = true if ( @dpar? and not @dest? )
         R.data            = freeze { x..., } if ( x = @data )?
         R[ subfsm_name ]  = @[ subfsm_name ].cstate for subfsm_name in @fsm_names
-        return freeze R
-    #-------------------------------------------------------------------------------------------------------
-    EXP_cstate:
-      get: ->
-        R                 = {}
-        R.lstate          = @lstate
-        R.data            = freeze { x..., } if ( x = @data )?
-        R[ subfsm_name ]  = @[ subfsm_name ].EXP_cstate for subfsm_name in @fsm_names
         return freeze R
     #-------------------------------------------------------------------------------------------------------
     EXP_dstate:
