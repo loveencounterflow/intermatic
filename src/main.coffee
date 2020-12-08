@@ -177,6 +177,7 @@ class Intermatic
       R.dpar    = x if ( x = @dpar    )?
       R.dest    = x if ( x = @dest    )?
       R.changed = x if ( x = @changed )?
+      R.lstate  = @lstate
       R.failed  = true if ( @dpar? and not @dest? )
       return freeze R
     #-------------------------------------------------------------------------------------------------------
