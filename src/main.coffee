@@ -346,19 +346,18 @@ class Intermatic
   #     throw error
   #   return null
 
-  # #---------------------------------------------------------------------------------------------------------
-  # _compile_goto: ->
-  #   @_tmp.known_names.add 'goto'
-  #   if ( goto = @_tmp.fsmd.goto )?
-  #     unless goto is '*'
-  #       throw new Error "^intermatic/_compile_handlers@776^ expected '*' for key `goto`, got #{rpr goto}"
-  #     transitioner  = @_get_trigger 'goto', null
-  #     goto          = ( dest, P... ) => transitioner dest, P...
-  #     for dest in @lstates
-  #       do ( dest ) =>
-  #         goto[ dest ] = ( P... ) => transitioner dest, P...
-  #     set @, 'goto', goto
-  #   return null
+  #---------------------------------------------------------------------------------------------------------
+  _compile_goto: ->
+    @_tmp.known_names.add 'goto'
+    if ( goto = @_tmp.fsmd.goto )?
+      validate.goto_target goto
+      transitioner  = @_get_trigger 'goto', null
+      goto          = ( dest, P... ) => transitioner dest, P...
+      for dest in @lstates
+        do ( dest ) =>
+          goto[ dest ] = ( P... ) => transitioner dest, P...
+      set @, 'goto', goto
+    return null
 
   # #---------------------------------------------------------------------------------------------------------
   # _compile_can: ->
@@ -387,22 +386,22 @@ class Intermatic
   #   set @, 'tryto', tryto
   #   return null
 
-  # #---------------------------------------------------------------------------------------------------------
-  # _compile_subfsms: ->
-  #   @_tmp.known_names.add 'fsms'
-  #   fsm_names = []
-  #   for sub_fname, sub_fsmd of @_tmp.fsmd.fsms ? {}
-  #     sub_fsmd  = { sub_fsmd..., }
-  #     if sub_fsmd.name? and sub_fsmd.name isnt sub_fname
-  #       throw new Error "^intermatic/_compile_subfsms@506^ name mismatch, got #{rpr sub_fname}, #{rpr sub_fsmd.name}"
-  #     sub_fsmd.name = sub_fname
-  #     set sub_fsmd, 'up', @
-  #     @_tmp.known_names.add sub_fname
-  #     fsm_names.push   sub_fname
-  #     set @, sub_fname, new @constructor sub_fsmd
-  #   @fsm_names    = freeze fsm_names
-  #   @has_subfsms  = fsm_names.length > 0
-  #   return null
+  #---------------------------------------------------------------------------------------------------------
+  _compile_subfsms: ->
+    @_tmp.known_names.add 'fsms'
+    fsm_names = []
+    for sub_fname, sub_fsmd of @_tmp.fsmd.fsms ? {}
+      sub_fsmd  = { sub_fsmd..., }
+      if sub_fsmd.name? and sub_fsmd.name isnt sub_fname
+        throw new Error "^intermatic/_compile_subfsms@506^ name mismatch, got #{rpr sub_fname}, #{rpr sub_fsmd.name}"
+      sub_fsmd.name = sub_fname
+      set sub_fsmd, 'up', @
+      @_tmp.known_names.add sub_fname
+      fsm_names.push   sub_fname
+      set @, sub_fname, new @constructor sub_fsmd
+    @fsm_names    = freeze fsm_names
+    @has_subfsms  = fsm_names.length > 0
+    return null
 
   # #---------------------------------------------------------------------------------------------------------
   # _compile_data: ->
