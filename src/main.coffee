@@ -126,8 +126,8 @@ class Intermatic
     @_compile_actions()
     # @_compile_handlers()
     @_compile_goto()
-    # @_compile_can()
-    # @_compile_tryto()
+    @_compile_can()
+    @_compile_tryto()
     @_compile_subfsms()
     # @_compile_data()
     # @_compile_cascades()
@@ -390,32 +390,34 @@ class Intermatic
       set @, 'goto', goto
     return null
 
-  # #---------------------------------------------------------------------------------------------------------
-  # _compile_can: ->
-  #   @_tmp.known_names.add 'can'
-  #   can = ( verb ) =>
-  #     unless ( trigger = @triggers[ verb ] )?
-  #       throw new Error "^intermatic/can@822^ unknown trigger #{rpr verb}"
-  #     return trigger[ @lstate ]?
-  #   for verb of @triggers
-  #     do ( verb ) =>
-  #       can[ verb ] = ( P... ) => can verb, P...
-  #   set @, 'can', can
-  #   return null
+  #---------------------------------------------------------------------------------------------------------
+  _compile_can: ->
+    @_tmp.known_names.add 'can'
+    #.......................................................................................................
+    can = ( verb ) =>
+      unless ( transitions = @moves[ verb ] )?
+        throw new Error "^intermatic/can@822^ unknown verb #{rpr verb}"
+      return transitions[ @lstate ]?
+    #.......................................................................................................
+    can_proxy = new Proxy can,
+      get: ( target, key ) -> ( -> target key )
+    #.......................................................................................................
+    set @, 'can', can_proxy
+    return null
 
-  # #---------------------------------------------------------------------------------------------------------
-  # _compile_tryto: ->
-  #   @_tmp.known_names.add 'tryto'
-  #   tryto = ( verb, P... ) =>
-  #     return false unless @can verb
-  #     ### TAINT we will possibly want to return some kind of result from trigger ###
-  #     @[ verb ] P...
-  #     return true
-  #   for verb of @triggers
-  #     do ( verb ) =>
-  #       tryto[ verb ] = ( P... ) => tryto verb, P...
-  #   set @, 'tryto', tryto
-  #   return null
+  #---------------------------------------------------------------------------------------------------------
+  _compile_tryto: ->
+    @_tmp.known_names.add 'tryto'
+    tryto = ( verb, P... ) =>
+      return false unless @can verb
+      @[ verb ] P...
+      return true
+    #.......................................................................................................
+    tryto_proxy = new Proxy tryto,
+      get: ( target, key ) -> ( ( P... ) -> target key, P... )
+    #.......................................................................................................
+    set @, 'tryto', tryto_proxy
+    return null
 
   #---------------------------------------------------------------------------------------------------------
   _compile_subfsms: ->
