@@ -111,6 +111,7 @@ class Intermatic
         set @, stage, {} for stage in stages
     @data               = null
     @history_length     = 1
+    @_cancelled         = null
     @_prv_lstates       = [ @_lstate, ]
     @_prv_verbs         = []
     @_nxt_dpar          = null
@@ -308,29 +309,49 @@ class Intermatic
       #.....................................................................................................
       @_nxt_dest  = dest
       changed     = dest isnt dpar
+      @_cancelled = false
       #.....................................................................................................
       if @cascades and @cascades.has verb
         for subfsm_name in @fsm_names
           @[ subfsm_name ].tryto verb, P...
       #.....................................................................................................
-      @_call_actions 'before',    'any',      P
-      @_call_actions 'before',    'change',   P if      changed
-      @_call_actions 'before',    verb,       P
-      @_call_actions 'leaving',   dpar,       P if      changed
-      @lstate                   = dest          if      changed
-      @_call_actions 'keeping',   dpar,       P if  not changed
-      @_call_actions 'entering',  dest,       P if      changed
-      @_call_actions 'after',     verb,       P
-      @_call_actions 'after',     'change',   P if      changed
-      @_call_actions 'after',     'any',      P
+      loop
+        @_call_actions 'before',    'any',      P;                  break if @_cancelled
+        @_call_actions 'before',    'change',   P if      changed;  break if @_cancelled
+        @_call_actions 'before',    verb,       P;                  break if @_cancelled
+        @_call_actions 'leaving',   dpar,       P if      changed;  break if @_cancelled
+        @lstate                   = dest          if      changed
+        @_call_actions 'keeping',   dpar,       P if  not changed;  break if @_cancelled
+        @_call_actions 'entering',  dest,       P if      changed;  break if @_cancelled
+        @_call_actions 'after',     verb,       P;                  break if @_cancelled
+        @_call_actions 'after',     'change',   P if      changed;  break if @_cancelled
+        @_call_actions 'after',     'any',      P;                  break if @_cancelled
+        break
+      #.....................................................................................................
+      if @_cancelled
+        debug '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> CANCELLED <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<'
+        ### TAINT not yet implemented ###
+        ### TAINT should be done in a method ###
+        ### TAINT alternatively consider to change values in temp object, only push to history when succesfull ###
+        # @_prv_lstates.pop()
+        # @_prv_verbs.pop()
+        # @_lstate = @_nxt_dpar
+        # debug @cstate
       #.....................................................................................................
       ### NOTE At this point, the transition has finished, so we reset the `@_nxt_*` attributes: ###
+      @_cancelled = null
       @_stage     = null
       @_nxt_verb  = null
       @_nxt_dest  = null
       @_nxt_dpar  = null
       #.....................................................................................................
       return null
+
+  #---------------------------------------------------------------------------------------------------------
+  cancel: ->
+    throw new Error "^intermatic/cancel@886^ can only cancel during move" unless @_stage?
+    @_cancelled = true
+    return null
 
   # #---------------------------------------------------------------------------------------------------------
   # _compile_handlers: ->
