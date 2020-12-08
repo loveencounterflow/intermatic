@@ -228,67 +228,67 @@ fsm.goto 'lit'
 # Lifecycle of Intermatic FSMs
 
 ```
-  1  ┌────────────────────╥───────────────────────────────────────────────────────┐
-  2  │               User ║ FSM                                                   │
-  3  │                    ║────────────────────┬──────────────────────────────────│
-  4  │                    ║                    │        fsm.move                  │
-  4  │                    ║                    │──────┬──────┬──────┬──────┬──────│
-  5  │                    ║            actions │lstate│ stage│ verb │ dpar │ dest │
-  6  │                    ║                    │      │      │      │      │      │
-  7  │════════════════════║════════════════════╪══════╪══════╪══════╪══════╪══════│
-  8  │                    ║                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
-  9  │────────────────────║────────────────────│ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
- 10  │          φ.start() ║                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
- 12  │                    ║   φ.before.any[]() │ void │ bfr. │ start│ void │ a    │
- 12  │                    ║φ.before.change[]() │ void │ bfr. │ start│ void │ a    │
- 12  │                    ║ φ.before.start[]() │ void │ bfr. │ start│ void │ a    │
- 13  │                    ║ φ.leaving.void[]() │ void │ lvg. │ start│ void │ a    │
- 14  │                    ║────────────────────│──────│ lvg. │ start│ void │ a    │
- 15  │                    ║   φ.entering.a[]() │ a    │ ent. │ start│ void │ a    │
- 16  │                    ║  φ.after.start[]() │ a    │ aftr.│ start│ void │ a    │
- 16  │                    ║ φ.after.change[]() │ a    │ aftr.│ start│ void │ a    │
- 16  │                    ║    φ.after.any[]() │ a    │ aftr.│ start│ void │ a    │
- 17  │────────────────────║────────────────────│ a    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
- 18  │           φ.step() ║                    │ a    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
- 20  │                    ║   φ.before.any[]() │ a    │ bfr. │ step │ a    │ b    │
- 20  │                    ║φ.before.change[]() │ a    │ bfr. │ step │ a    │ b    │
- 20  │                    ║  φ.before.step[]() │ a    │ bfr. │ step │ a    │ b    │
- 21  │                    ║    φ.leaving.a[]() │ a    │ lvg. │ step │ a    │ b    │
- 22  │                    ║────────────────────│──────│ lvg. │ step │ a    │ b    │
- 23  │                    ║   φ.entering.b[]() │ b    │ ent. │ step │ a    │ b    │
- 24  │                    ║   φ.after.step[]() │ b    │ aftr.│ step │ a    │ b    │
- 24  │                    ║ φ.after.change[]() │ b    │ aftr.│ step │ a    │ b    │
- 24  │                    ║    φ.after.any[]() │ b    │ aftr.│ step │ a    │ b    │
- 25  │────────────────────║────────────────────│ b    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
- 26  │           φ.step() ║                    │ b    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
- 28  │                    ║   φ.before.any[]() │ b    │ bfr. │ step │ b    │ c    │
- 28  │                    ║φ.before.change[]() │ b    │ bfr. │ step │ b    │ c    │
- 28  │                    ║  φ.before.step[]() │ b    │ bfr. │ step │ b    │ c    │
- 29  │                    ║    φ.leaving.b[]() │ b    │ lvg. │ step │ b    │ c    │
- 30  │                    ║────────────────────│──────│ lvg. │ step │ b    │ c    │
- 31  │                    ║   φ.entering.c[]() │ c    │ ent. │ step │ b    │ c    │
- 32  │                    ║   φ.after.step[]() │ c    │ aftr.│ step │ b    │ c    │
- 32  │                    ║ φ.after.change[]() │ c    │ aftr.│ step │ b    │ c    │
- 32  │                    ║    φ.after.any[]() │ c    │ aftr.│ step │ b    │ c    │
- 33  │────────────────────║────────────────────│ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
- 34  │           φ.step() ║                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
- 36  │                    ║   φ.before.any[]() │ c    │ bfr. │ step │ c    │ c    │
- 36  │                    ║  φ.before.step[]() │ c    │ bfr. │ step │ c    │ c    │ # NOTE that `before.change`
- 37  │                    ║    φ.keeping.c[]() │ c    │ keep.│ step │ c    │ c    │ # and `after.change` are
- 38  │                    ║   φ.after.step[]() │ c    │ aftr.│ step │ c    │ c    │ # missing here b/c lstate
- 38  │                    ║    φ.after.any[]() │ c    │ aftr.│ step │ c    │ c    │ # is kept at `c`
- 39  │────────────────────║────────────────────│ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
- 40  │           φ.stop() ║                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
- 42  │                    ║   φ.before.any[]() │ c    │ bfr. │ stop │ c    │ void │
- 42  │                    ║φ.before.change[]() │ c    │ bfr. │ stop │ c    │ void │
- 42  │                    ║  φ.before.stop[]() │ c    │ bfr. │ stop │ c    │ void │
- 43  │                    ║    φ.leaving.c[]() │ c    │ lvg. │ stop │ c    │ void │
- 44  │                    ║────────────────────│──────│ lvg. │ stop │ c    │ void │
- 45  │                    ║   φ.after.stop[]() │ void │ aftr.│ stop │ c    │ void │
- 45  │                    ║ φ.after.change[]() │ void │ aftr.│ stop │ c    │ void │
- 45  │                    ║    φ.after.any[]() │ void │ aftr.│ stop │ c    │ void │
- 46  │                    ║                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
- 47  └────────────────────╨────────────────────┴──────┴──────┴──────┴──────┴──────┘
+     ┌─────────────╥───────────────────────────────────────────────────────┐
+  1  │      called ║ called by FSM                                         │
+  2  │     by User ║────────────────────┬──────────────────────────────────│
+  3  │             ║                    │fsm.  │ fsm.move                  │
+  4  │             ║                    │lstate│──────┬──────┬──────┬──────│
+  5  │             ║            actions │      │ stage│ verb │ dpar │ dest │
+  6  │             ║                    │      │      │      │      │      │
+  7  │═════════════║════════════════════╪══════╪══════╪══════╪══════╪══════│
+  8  │             ║                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+  9  │─────────────║────────────────────│ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 10  │   φ.start() ║                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 11  │             ║   φ.before.any[]() │ void │ bfr. │ start│ void │ a    │
+ 12  │             ║φ.before.change[]() │ void │ bfr. │ start│ void │ a    │
+ 13  │             ║ φ.before.start[]() │ void │ bfr. │ start│ void │ a    │
+ 14  │             ║ φ.leaving.void[]() │ void │ lvg. │ start│ void │ a    │
+ 15  │             ║────────────────────│──────│ lvg. │ start│ void │ a    │
+ 16  │             ║   φ.entering.a[]() │ a    │ ent. │ start│ void │ a    │
+ 17  │             ║  φ.after.start[]() │ a    │ aftr.│ start│ void │ a    │
+ 18  │             ║ φ.after.change[]() │ a    │ aftr.│ start│ void │ a    │
+ 19  │             ║    φ.after.any[]() │ a    │ aftr.│ start│ void │ a    │
+ 20  │─────────────║────────────────────│ a    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 21  │    φ.step() ║                    │ a    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 22  │             ║   φ.before.any[]() │ a    │ bfr. │ step │ a    │ b    │
+ 23  │             ║φ.before.change[]() │ a    │ bfr. │ step │ a    │ b    │
+ 24  │             ║  φ.before.step[]() │ a    │ bfr. │ step │ a    │ b    │
+ 25  │             ║    φ.leaving.a[]() │ a    │ lvg. │ step │ a    │ b    │
+ 26  │             ║────────────────────│──────│ lvg. │ step │ a    │ b    │
+ 27  │             ║   φ.entering.b[]() │ b    │ ent. │ step │ a    │ b    │
+ 28  │             ║   φ.after.step[]() │ b    │ aftr.│ step │ a    │ b    │
+ 29  │             ║ φ.after.change[]() │ b    │ aftr.│ step │ a    │ b    │
+ 30  │             ║    φ.after.any[]() │ b    │ aftr.│ step │ a    │ b    │
+ 31  │─────────────║────────────────────│ b    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 32  │    φ.step() ║                    │ b    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 33  │             ║   φ.before.any[]() │ b    │ bfr. │ step │ b    │ c    │
+ 34  │             ║φ.before.change[]() │ b    │ bfr. │ step │ b    │ c    │
+ 35  │             ║  φ.before.step[]() │ b    │ bfr. │ step │ b    │ c    │
+ 36  │             ║    φ.leaving.b[]() │ b    │ lvg. │ step │ b    │ c    │
+ 37  │             ║────────────────────│──────│ lvg. │ step │ b    │ c    │
+ 38  │             ║   φ.entering.c[]() │ c    │ ent. │ step │ b    │ c    │
+ 39  │             ║   φ.after.step[]() │ c    │ aftr.│ step │ b    │ c    │
+ 40  │             ║ φ.after.change[]() │ c    │ aftr.│ step │ b    │ c    │
+ 41  │             ║    φ.after.any[]() │ c    │ aftr.│ step │ b    │ c    │
+ 42  │─────────────║────────────────────│ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 43  │    φ.step() ║                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 44  │             ║   φ.before.any[]() │ c    │ bfr. │ step │ c    │ c    │
+ 45  │             ║  φ.before.step[]() │ c    │ bfr. │ step │ c    │ c    │ # NOTE that `before.change`
+ 46  │             ║    φ.keeping.c[]() │ c    │ keep.│ step │ c    │ c    │ # and `after.change` are
+ 47  │             ║   φ.after.step[]() │ c    │ aftr.│ step │ c    │ c    │ # missing here b/c lstate
+ 48  │             ║    φ.after.any[]() │ c    │ aftr.│ step │ c    │ c    │ # is kept at `c`
+ 49  │─────────────║────────────────────│ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 50  │    φ.stop() ║                    │ c    │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+ 51  │             ║   φ.before.any[]() │ c    │ bfr. │ stop │ c    │ void │
+ 52  │             ║φ.before.change[]() │ c    │ bfr. │ stop │ c    │ void │
+ 53  │             ║  φ.before.stop[]() │ c    │ bfr. │ stop │ c    │ void │
+ 54  │             ║    φ.leaving.c[]() │ c    │ lvg. │ stop │ c    │ void │
+ 55  │             ║────────────────────│──────│ lvg. │ stop │ c    │ void │
+ 56  │             ║   φ.after.stop[]() │ void │ aftr.│ stop │ c    │ void │
+ 57  │             ║ φ.after.change[]() │ void │ aftr.│ stop │ c    │ void │
+ 58  │             ║    φ.after.any[]() │ void │ aftr.│ stop │ c    │ void │
+ 59  │             ║                    │ void │╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│╳╳╳╳╳╳│
+     └─────────────╨────────────────────┴──────┴──────┴──────┴──────┴──────┘
 ```
 
 > *Note: in the above, `x[]()` denotes a call to all the functions in the list of functions identified by
