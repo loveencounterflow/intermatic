@@ -126,7 +126,7 @@ class Intermatic
     # @_compile_subfsms()
     # @_compile_data()
     # @_compile_cascades()
-    # @_copy_other_attributes()
+    @_copy_other_attributes()
     delete @_tmp
     return null
 
@@ -167,11 +167,13 @@ class Intermatic
     dest:   get: -> @_nxt_dest
     #-------------------------------------------------------------------------------------------------------
     move:   get: ->
-      R       = {}
-      R.stage = v if ( v = @stage )?
-      R.verb  = v if ( v = @verb  )?
-      R.dpar  = v if ( v = @dpar  )?
-      R.dest  = v if ( v = @dest  )?
+      R         = {}
+      R.stage   = x if ( x = @stage   )?
+      R.verb    = x if ( x = @verb    )?
+      R.dpar    = x if ( x = @dpar    )?
+      R.dest    = x if ( x = @dest    )?
+      R.changed = x if ( x = @changed )?
+      R.failed  = true if ( @dpar? and not @dest? )
       return freeze R
     #-------------------------------------------------------------------------------------------------------
     fsms: get: -> ( @[ subfsm_name ] for subfsm_name in @fsm_names )
@@ -184,7 +186,7 @@ class Intermatic
     path:
       get: ->
         return R if ( R = @_path )?
-        return @_path = if @up? then "#{@up.path}/#{@name}" else @name
+        return @_path = if @up? then "#{@up.path}/#{@name}" else @name ? null
     #-------------------------------------------------------------------------------------------------------
     history:
       get: ->
@@ -289,7 +291,6 @@ class Intermatic
 
   #---------------------------------------------------------------------------------------------------------
   _get_trigger: ( verb, dests_by_deps = null ) ->
-    ### TAINT add extra arguments P ###
     ### TAINT too much logic to be done at in run time, try to precompile more ###
     return transitioner = ( P... ) =>
       ### TAINT use single transitioner method for all triggers? ###
@@ -297,34 +298,17 @@ class Intermatic
       ### TAINT consider to do this inside a property setter, as for `@lstate`: ###
       @_prv_verbs     = push_circular @_prv_verbs, verb, @history_length
       @_nxt_dpar      = dpar = @lstate
-      # id              = @_new_tid()
       #-------------------------------------------------------------------------------------------------
-      # if not dests_by_deps?
-      #   debug '^374873^', verb, P
-      if dests_by_deps? then    dest          = ( dests_by_deps[ dpar ] ? null )
+      if dests_by_deps? then    dest          = ( dests_by_deps[ dpar ] ? dests_by_deps.any ? null )
       else                    [ dest, P..., ] = P
       return @fail P... unless dest?
-      @_nxt_dest = dest
       #.....................................................................................................
-      changed                   = dest isnt dpar
+      @_nxt_dest  = dest
+      changed     = dest isnt dpar
       #.....................................................................................................
       if @cascades and @cascades.has verb
         for subfsm_name in @fsm_names
           @[ subfsm_name ].tryto verb, P...
-      #.....................................................................................................
-      # for aname, actions of @before
-      #   continue unless ( aname is 'any' ) or ( aname is XXXX )
-      #   for action in actions
-      #     XXXXX
-      debug '^333344^', "{ verb, dpar, dest, changed, } ", { verb, dpar, dest, changed, }
-      debug '^333344^', "@[ verb ]                      ", @[ verb ]
-      debug '^333344^', "@before.any                    ", @before.any
-      debug '^333344^', "@before.#{verb}                ", @before[   verb ]
-      debug '^333344^', "@leaving.#{dpar}               ", @leaving[  dpar ]
-      debug '^333344^', "@entering.#{dest}              ", @entering[ dest ]
-      debug '^333344^', "@after.#{verb}                 ", @after[    verb ]
-      # @before.any?              P...
-      # @before.change?           P... if changed
       #.....................................................................................................
       @_call_actions 'before',    'any',      P
       @_call_actions 'before',    'change',   P if      changed
