@@ -37,6 +37,10 @@ declare 'lstate', tests:
   # or test against catalog of known verbs
 
 #-----------------------------------------------------------------------------------------------------------
+declare 'goto_target', tests:
+  "x is 'any'": ( x ) -> x is 'any'
+
+#-----------------------------------------------------------------------------------------------------------
 declare 'actions', tests:
   ### TAINT allow async functions ###
   "x isa list of functions":      ( x ) -> @isa.list_of 'function', x
