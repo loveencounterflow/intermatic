@@ -140,8 +140,7 @@ class Intermatic
     lstate:
       get:            -> @_lstate
       set: ( lstate ) ->
-        if typeof lstate isnt 'string'
-          throw new Error "^intermatic/set/lstate@501^ lstate name must be text, got #{rpr lstate}"
+        validate.lstate lstate
         @_prv_lstates = push_circular @_prv_lstates, lstate, @history_length + 1
         @_lstate      = lstate
     #-------------------------------------------------------------------------------------------------------
@@ -149,7 +148,6 @@ class Intermatic
       get: ->
         R                 = Object.assign {}, @move
         R.path            = x if ( x = @path )?
-        R.lstate          = @lstate
         R.data            = freeze { x..., } if ( x = @data )?
         R[ subfsm_name ]  = @[ subfsm_name ].cstate for subfsm_name in @fsm_names
         return freeze R
