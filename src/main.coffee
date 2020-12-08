@@ -433,12 +433,12 @@ class Intermatic
   #   @cascades = new Set cascades
   #   return null
 
-  # #---------------------------------------------------------------------------------------------------------
-  # _copy_other_attributes: ->
-  #   for pname, propd of Object.getOwnPropertyDescriptors @_tmp.fsmd
-  #     continue if @_tmp.known_names.has pname
-  #     Object.defineProperty @, pname, propd
-  #   return null
+  #---------------------------------------------------------------------------------------------------------
+  _copy_other_attributes: ->
+    for pname, propd of Object.getOwnPropertyDescriptors @_tmp.fsmd
+      continue if @_tmp.known_names.has pname
+      Object.defineProperty @, pname, propd
+    return null
 
 
 ############################################################################################################
