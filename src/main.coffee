@@ -316,16 +316,26 @@ class Intermatic
           @[ subfsm_name ].tryto verb, P...
       #.....................................................................................................
       loop
+        # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         @_call_actions 'before',    'any',      P;                  break if @_cancelled
         @_call_actions 'before',    'change',   P if      changed;  break if @_cancelled
         @_call_actions 'before',    verb,       P;                  break if @_cancelled
+        # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        @_call_actions 'leaving',   'any',      P if      changed;  break if @_cancelled
         @_call_actions 'leaving',   dpar,       P if      changed;  break if @_cancelled
-        @lstate                   = dest          if      changed
+        #...................................................................................................
+        @lstate = dest if changed
+        #...................................................................................................
+        @_call_actions 'keeping',   'any',      P if  not changed;  break if @_cancelled
         @_call_actions 'keeping',   dpar,       P if  not changed;  break if @_cancelled
+        # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
+        @_call_actions 'entering',  'any',      P if      changed;  break if @_cancelled
         @_call_actions 'entering',  dest,       P if      changed;  break if @_cancelled
-        @_call_actions 'after',     verb,       P;                  break if @_cancelled
-        @_call_actions 'after',     'change',   P if      changed;  break if @_cancelled
+        # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         @_call_actions 'after',     'any',      P;                  break if @_cancelled
+        @_call_actions 'after',     'change',   P if      changed;  break if @_cancelled
+        @_call_actions 'after',     verb,       P;                  break if @_cancelled
+        # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         break
       #.....................................................................................................
       if @_cancelled
