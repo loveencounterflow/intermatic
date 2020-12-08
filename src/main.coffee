@@ -211,35 +211,37 @@ class Intermatic
     @_tmp.known_names.add 'moves'
     # starred       = {}
     lstates       = new Set [ 'void', ]
-    fsmd_moves    = @_tmp.fsmd.moves = { ( @_tmp.fsmd.moves ? {} )..., }
+    fsmd_moves    = @_tmp.fsmd.moves ? {}
+    validate.fsmd_moves fsmd_moves
+    fsmd_moves    = @_tmp.fsmd.moves = { fsmd_moves..., }
     @moves        = {}
     verbs         = ( verb for verb of fsmd_moves )
-    #.......................................................................................................
-    unless fsmd_moves.start?
-      ### TAINT validate.nonempty_text fsmd_moves.start ###
-      ### TAINT validate.nonempty_list verbs ###
-      ### TAINT validate.nonempty_list fsmd_moves[ verbs[ 0 ] ][ 0 ] ###
-      first_lstate  = fsmd_moves[ verbs[ 0 ] ][ 0 ] ? 'void'
-      fsmd_moves.start   = [ 'void', first_lstate, ]
     #.......................................................................................................
     for verb, trajectory of fsmd_moves
       ### If the verb is `start`, then value may be just the name of the start verb instead of a list ###
       validate.verb verb
       if ( verb is 'start' ) and ( not isa.list trajectory )
         trajectory = [ 'void', trajectory, ]
-      validate.trajectory trajectory
       continue unless trajectory.length > 0
       #.....................................................................................................
-      for tidx in [ 0 ... trajectory.length - 1 ]
-        ### TAINT validate that free of collision ###
-        dpar  = trajectory[ tidx ]
-        dest  = trajectory[ tidx + 1 ]
-        #...................................................................................................
-        lstates.add dpar
-        lstates.add dest
-        set ( @moves[ verb ] ?= {} ), dpar, dest
+      if isa.fsmd_multitrajectory trajectory
+        @_compile_monotrajectory lstates, verb, monotrajectory for monotrajectory in trajectory
+      else
+        @_compile_monotrajectory lstates, verb, trajectory
     #.......................................................................................................
     @lstates = freeze [ lstates..., ]
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _compile_monotrajectory: ( lstates, verb, trajectory ) ->
+    for tidx in [ 0 ... trajectory.length - 1 ]
+      ### TAINT validate that free of collision ###
+      dpar  = trajectory[ tidx ]
+      dest  = trajectory[ tidx + 1 ]
+      #...................................................................................................
+      lstates.add dpar
+      lstates.add dest
+      set ( @moves[ verb ] ?= {} ), dpar, dest
     return null
 
   #---------------------------------------------------------------------------------------------------------
