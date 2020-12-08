@@ -19,6 +19,10 @@ declare 'trajectory', tests:
   "length is 0 or > 1":       ( x ) -> ( x.length is 0 ) or ( x.length > 1 )
 
 #-----------------------------------------------------------------------------------------------------------
+declare 'start_trajectory', tests:
+  "x is either a trajectory or a lstate": ( x ) -> ( @isa.trajectory x ) or ( @isa.lstate x )
+
+#-----------------------------------------------------------------------------------------------------------
 declare 'verb', tests:
   "x isa nonempty_text":      ( x ) -> @isa.nonempty_text x
   # "x is not a reserved word": ( x ) ->
@@ -36,6 +40,25 @@ declare 'lstate', tests:
 declare 'actions', tests:
   ### TAINT allow async functions ###
   "x isa list of functions":      ( x ) -> @isa.list_of 'function', x
+
+#-----------------------------------------------------------------------------------------------------------
+declare 'fsmd_multitrajectory', ( x ) ->
+  return false unless @isa.list x
+  return false unless @isa.list x[ 0 ]
+  return @isa.list_of 'trajectory', x
+
+#-----------------------------------------------------------------------------------------------------------
+declare 'fsmd_moves', tests:
+  "x is an object":               ( x ) -> @isa.object x
+  "keys of x are verbs":          ( x ) -> ( Object.keys x ).every ( k ) => @isa.verb k
+  "values of x are trajectories (or start_trajectories) or a list of those": ( x ) ->
+    for k, v of x
+      if k is 'start'
+        return false unless @isa.start_trajectory v
+        continue
+      ### NOTE this allows lists of trajectories for verbs other than 'start' only ###
+      return false unless ( @isa.trajectory v ) or ( @isa.fsmd_multitrajectory v )
+    return true
 
 
 #===========================================================================================================
