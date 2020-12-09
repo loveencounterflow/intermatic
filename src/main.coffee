@@ -415,17 +415,20 @@ class Intermatic
 
   #---------------------------------------------------------------------------------------------------------
   _compile_subfsms: ->
-    @_tmp.known_names.add 'fsms'
     fsm_names = []
-    for sub_fname, sub_fsmd of @_tmp.fsmd.fsms ? {}
+    for subfsm_name, sub_fsmd of @_tmp.fsmd ? {}
+      continue if @_tmp.known_names.has subfsm_name
+      continue if @_reserved_keys.has subfsm_name
+      continue unless isa.object sub_fsmd
+      @_tmp.known_names.add subfsm_name
       sub_fsmd  = { sub_fsmd..., }
-      if sub_fsmd.name? and sub_fsmd.name isnt sub_fname
-        throw new Error "^intermatic/_compile_subfsms@506^ name mismatch, got #{rpr sub_fname}, #{rpr sub_fsmd.name}"
-      sub_fsmd.name = sub_fname
+      if sub_fsmd.name? and sub_fsmd.name isnt subfsm_name
+        throw new Error "^intermatic/_compile_subfsms@506^ name mismatch, got #{rpr subfsm_name}, #{rpr sub_fsmd.name}"
+      sub_fsmd.name = subfsm_name
       set sub_fsmd, 'up', @
-      @_tmp.known_names.add sub_fname
-      fsm_names.push   sub_fname
-      set @, sub_fname, new @constructor sub_fsmd
+      @_tmp.known_names.add subfsm_name
+      fsm_names.push   subfsm_name
+      set @, subfsm_name, new @constructor sub_fsmd
     @fsm_names    = freeze fsm_names
     @has_subfsms  = fsm_names.length > 0
     return null
