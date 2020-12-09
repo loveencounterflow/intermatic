@@ -425,26 +425,20 @@ class Intermatic
     @has_subfsms  = fsm_names.length > 0
     return null
 
-  # #---------------------------------------------------------------------------------------------------------
-  # _compile_data: ->
-  #   @_tmp.known_names.add 'data'
-  #   return null unless ( data = @_tmp.fsmd.data )?
-  #   @data = {}
-  #   for pname, propd of Object.getOwnPropertyDescriptors @_tmp.fsmd.data
-  #     Object.defineProperty @data, pname, propd
-  #   return null
-
-  # #---------------------------------------------------------------------------------------------------------
-  # _compile_cascades: ->
-  #   @_tmp.known_names.add 'cascades'
-  #   return null unless ( cascades = @_tmp.fsmd.cascades )?
-  #   @cascades = new Set cascades
-  #   return null
+  #---------------------------------------------------------------------------------------------------------
+  _compile_cascades: ->
+    @_tmp.known_names.add 'cascades'
+    return null unless ( cascades = @_tmp.fsmd.cascades )?
+    @cascades = new Set cascades
+    return null
 
   #---------------------------------------------------------------------------------------------------------
   _copy_other_attributes: ->
     for pname, propd of Object.getOwnPropertyDescriptors @_tmp.fsmd
       continue if @_tmp.known_names.has pname
+      @_tmp.known_names.add pname
+      # if ( pname is 'data' ) and ( isa.object propd.value ) and ( not propd.value.up? )
+      #   Object.defineProperty propd.value, 'fsm', { enumerable: false, value: @, }
       Object.defineProperty @, pname, propd
     return null
 
