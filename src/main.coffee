@@ -104,6 +104,7 @@ class Intermatic
     @has_subfsms        = false
     @_stage             = null
     @_lstate            = 'void'
+    @_reserved_keys     = new Set()
     @_trigger_stages    = freeze [ 'before', 'after', ]
     @_state_stages      = freeze [ 'entering', 'leaving', 'keeping', ]
     do =>
@@ -119,6 +120,10 @@ class Intermatic
     @_nxt_verb          = null
     @up                 = null
     @_path              = null
+    #.......................................................................................................
+    do =>
+      @_reserved_keys.add k for k of @
+    #.......................................................................................................
     @_compile_fail()
     # @_compile_cyclers()
     @_compile_moves()
