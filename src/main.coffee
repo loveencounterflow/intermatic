@@ -130,7 +130,7 @@ class Intermatic
     @_compile_tryto()
     @_compile_subfsms()
     # @_compile_data()
-    # @_compile_cascades()
+    @_compile_cascades()
     @_copy_other_attributes()
     delete @_tmp
     return null
@@ -139,6 +139,7 @@ class Intermatic
   Object.defineProperties @prototype,
     #-------------------------------------------------------------------------------------------------------
     lstate:
+      enumerable:     true
       get:            -> @_lstate
       set: ( lstate ) ->
         validate.lstate lstate
@@ -146,6 +147,7 @@ class Intermatic
         @_lstate      = lstate
     #-------------------------------------------------------------------------------------------------------
     cstate:
+      enumerable:     true
       get: ->
         R                 = Object.assign {}, @move
         R.path            = x if ( x = @path )?
@@ -154,6 +156,7 @@ class Intermatic
         return freeze R
     #-------------------------------------------------------------------------------------------------------
     EXP_dstate:
+      enumerable:     true
       get: ->
         target        = { lstate: @lstate, }
         R             = { [@name]: target, }
