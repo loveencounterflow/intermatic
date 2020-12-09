@@ -178,7 +178,7 @@ class Intermatic
       R.verb    = x if ( x = @verb    )?
       R.dpar    = x if ( x = @dpar    )?
       R.dest    = x if ( x = @dest    )?
-      R.changed = x if ( x = @changed )?
+      R.changed = x if ( x = @changed )? and x
       R.lstate  = @lstate
       R.failed  = true if ( @dpar? and not @dest? )
       return freeze R
