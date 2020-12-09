@@ -103,10 +103,11 @@ alpha_btn:
 * and may contain zero or more sub-FSMs
 * all of which must be named.
 * Compound and simple FSMs are instances of `Intermatic`,
-* simple FSMs do not have sub-FSMs under attribute `my` in their FSMDs, but
-* compound FSMs *do* have one or more sub-FSMs declared under their FSMD's `my` attribute.
-* Since attribute `fsmd.my` must be an object when defined, it follows that all sub-FSMs must implicitly
-  have unique names.
+* Sub-FSMs may be defined as sub-objects of their parent FSMD provided
+  * their name is not a reserved key (`after before cascades cstate data entering EXP_dstate fsm_names
+    has_subfsms history_length keeping leaving lstate lstates moves up`)
+  * their value is a plain JS objects (`{}`)
+  * their value is a valid FSMD
 
 * Unreachable states are states that can not be reached by any kind of proper (named) trigger;
 * these make sense only for FSMs that have a `goto()` method.
