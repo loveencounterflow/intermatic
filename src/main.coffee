@@ -366,20 +366,6 @@ class Intermatic
     @_cancelled = true
     return null
 
-  # #---------------------------------------------------------------------------------------------------------
-  # _compile_handlers: ->
-  #   ### TAINT add handlers for trigger, change ###
-  #   ### TAINT check names against reserved ###
-  #   try
-  #     for category in [ 'before', 'entering', 'keeping', 'leaving', 'after', ]
-  #       @_tmp.known_names.add category
-  #       for name, handler of @_tmp.fsmd[ category ] ? {}
-  #         @[ category ][ name ] = handler.bind @
-  #   catch error
-  #     error.message += " — Error occurred during @_compile_handlers with #{rpr { category, name, handler, }}"
-  #     throw error
-  #   return null
-
   #---------------------------------------------------------------------------------------------------------
   _compile_goto: ->
     @_tmp.known_names.add 'goto'
