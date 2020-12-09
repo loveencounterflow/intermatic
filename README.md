@@ -148,6 +148,8 @@ alpha_btn:
 * **actions** are (synchronous or asynchronous) functions that are called in response to actions having taken
   or about to take place
 
+* Verbs mentioned in the **fsmd.cascades** attributes will be called on all sub-FSMs.
+
 * `fsm.history`
 
 * Multiple terminal states are not a problem.
@@ -354,11 +356,6 @@ fsmd =
   * `entering`, `leaving`—for state actions, only called when `dpar` is different from `dest`
   * `after`—for trigger actions, called after move has finished
 
-* [ ]
-
-
-
-
 * [ ] implement `goto` with list of target (or source and target?) states
 * [ ] implement `toggle`
 * [ ] implement trigger cancellation (using API call, not return value)
@@ -367,7 +364,7 @@ fsmd =
 * [ ] percolate/bubble triggers (from sub to up? both directions? all FSMs in tree?)
 * [ ] when one trigger bubbles through the FSMs, how to tell when that trigger has been processed? Two
   consecutive events could have same name. Use ID?
-* [ ] implement cascading events, such that `top.start()` implicitly calls `start()` on all sub-FSMs
+* [x] implement cascading events, such that `top.start()` implicitly calls `start()` on all sub-FSMs
 * [ ] asynchronous moves
 * [ ] equivalents to `setTimeout()`, `setInterval()`?
 * [ ] make symbolic `'*'` equivalent to `'any'`
