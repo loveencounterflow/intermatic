@@ -186,6 +186,7 @@
         this.has_subfsms = false;
         this._stage = null;
         this._lstate = 'void';
+        this._reserved_keys = new Set();
         this._trigger_stages = freeze(['before', 'after']);
         this._state_stages = freeze(['entering', 'leaving', 'keeping']);
         (() => {
@@ -216,6 +217,15 @@
         this._nxt_verb = null;
         this.up = null;
         this._path = null;
+        (() => {          //.......................................................................................................
+          var k, results;
+          results = [];
+          for (k in this) {
+            results.push(this._reserved_keys.add(k));
+          }
+          return results;
+        })();
+        //.......................................................................................................
         this._compile_fail();
         // @_compile_cyclers()
         this._compile_moves();
@@ -606,21 +616,30 @@
 
       //---------------------------------------------------------------------------------------------------------
       _compile_subfsms() {
-        var fsm_names, ref, ref1, sub_fname, sub_fsmd;
-        this._tmp.known_names.add('fsms');
+        var fsm_names, ref, ref1, sub_fsmd, subfsm_name;
         fsm_names = [];
-        ref1 = (ref = this._tmp.fsmd.fsms) != null ? ref : {};
-        for (sub_fname in ref1) {
-          sub_fsmd = ref1[sub_fname];
-          sub_fsmd = {...sub_fsmd};
-          if ((sub_fsmd.name != null) && sub_fsmd.name !== sub_fname) {
-            throw new Error(`^intermatic/_compile_subfsms@506^ name mismatch, got ${rpr(sub_fname)}, ${rpr(sub_fsmd.name)}`);
+        ref1 = (ref = this._tmp.fsmd) != null ? ref : {};
+        for (subfsm_name in ref1) {
+          sub_fsmd = ref1[subfsm_name];
+          if (this._tmp.known_names.has(subfsm_name)) {
+            continue;
           }
-          sub_fsmd.name = sub_fname;
+          if (this._reserved_keys.has(subfsm_name)) {
+            continue;
+          }
+          if (!isa.object(sub_fsmd)) {
+            continue;
+          }
+          this._tmp.known_names.add(subfsm_name);
+          sub_fsmd = {...sub_fsmd};
+          if ((sub_fsmd.name != null) && sub_fsmd.name !== subfsm_name) {
+            throw new Error(`^intermatic/_compile_subfsms@506^ name mismatch, got ${rpr(subfsm_name)}, ${rpr(sub_fsmd.name)}`);
+          }
+          sub_fsmd.name = subfsm_name;
           set(sub_fsmd, 'up', this);
-          this._tmp.known_names.add(sub_fname);
-          fsm_names.push(sub_fname);
-          set(this, sub_fname, new this.constructor(sub_fsmd));
+          this._tmp.known_names.add(subfsm_name);
+          fsm_names.push(subfsm_name);
+          set(this, subfsm_name, new this.constructor(sub_fsmd));
         }
         this.fsm_names = freeze(fsm_names);
         this.has_subfsms = fsm_names.length > 0;
