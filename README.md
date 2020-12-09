@@ -380,6 +380,7 @@ fsmd =
   * `ccstate`(?) more complete state including history (?)
 
 * [ ] make `fsm.history` return list of `@move` objects, do not construct new data type
+* [ ] remove `index.*` as those files are no longer needed
 
 <!--
 * [ ] consider using more flexible, clearer(?) syntax where triggers may be grouped as seen fit, ex.:
