@@ -305,10 +305,11 @@ class Intermatic
     return null
 
   #---------------------------------------------------------------------------------------------------------
-  _call_actions: ( stage, verb_or_lstate, P ) ->
-    @_stage = stage
-    return null unless ( transitioners = @[ stage ]?[ verb_or_lstate ] )?
-    transitioner.apply @, P for transitioner in transitioners
+  _call_actions: ( target, stage, verb_or_lstate, P... ) ->
+    return null unless target?
+    return null unless ( transitioners = target[ stage ]?[ verb_or_lstate ] )?
+    target._stage = stage
+    transitioner.apply target, P for transitioner in transitioners
     return null
 
   #---------------------------------------------------------------------------------------------------------
@@ -335,24 +336,25 @@ class Intermatic
       #.....................................................................................................
       loop
         # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        @_call_actions 'before',    'any',      P;                  break if @_cancelled
-        @_call_actions 'before',    'change',   P if      changed;  break if @_cancelled
-        @_call_actions 'before',    verb,       P;                  break if @_cancelled
+        @_call_actions @,         'before',    'any',             P...;                  break if @_cancelled
+        @_call_actions @,         'before',    'change',          P... if      changed;  break if @_cancelled
+        @_call_actions @,         'before',    verb,              P...;                  break if @_cancelled
         # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        @_call_actions 'leaving',   'any',      P if      changed;  break if @_cancelled
-        @_call_actions 'leaving',   dpar,       P if      changed;  break if @_cancelled
+        @_call_actions @,         'leaving',   'any',             P... if      changed;  break if @_cancelled
+        @_call_actions @,         'leaving',   dpar,              P... if      changed;  break if @_cancelled
         #...................................................................................................
         @lstate = dest if changed
         #...................................................................................................
-        @_call_actions 'keeping',   'any',      P if  not changed;  break if @_cancelled
-        @_call_actions 'keeping',   dpar,       P if  not changed;  break if @_cancelled
+        @_call_actions @,         'keeping',   'any',             P... if  not changed;  break if @_cancelled
+        @_call_actions @,         'keeping',   dpar,              P... if  not changed;  break if @_cancelled
         # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        @_call_actions 'entering',  'any',      P if      changed;  break if @_cancelled
-        @_call_actions 'entering',  dest,       P if      changed;  break if @_cancelled
+        @_call_actions @,         'entering',  'any',             P... if      changed;  break if @_cancelled
+        @_call_actions @,         'entering',  dest,              P... if      changed;  break if @_cancelled
         # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-        @_call_actions 'after',     'any',      P;                  break if @_cancelled
-        @_call_actions 'after',     'change',   P if      changed;  break if @_cancelled
-        @_call_actions 'after',     verb,       P;                  break if @_cancelled
+        @_call_actions @,         'after',     'any',             P...;                  break if @_cancelled
+        @_call_actions @,         'after',     'change',          P... if      changed;  break if @_cancelled
+        @_call_actions @,         'after',     verb,              P...;                  break if @_cancelled
+        @_call_actions @root_fsm, 'after',     'EXP_any_change',  @, P... if      changed;  break if @_cancelled
         # . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
         break
       #.....................................................................................................
