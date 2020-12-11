@@ -175,12 +175,13 @@
     class Intermatic {
       //---------------------------------------------------------------------------------------------------------
       constructor(fsmd) {
+        var ref, ref1;
         // validate.fsmd fsmd
-        // @_types             = types
+        // @_types               = types
         this._tmp = {};
         this._tmp.fsmd = {...fsmd};
         this._tmp.known_names = new Set();
-        // @_mnames            = new Set()
+        // @_mnames              = new Set()
         this.moves = null;
         this.cascades = null;
         this.lstates = null;
@@ -218,16 +219,26 @@
         this._nxt_dpar = null;
         this._nxt_dest = null;
         this._nxt_verb = null;
-        /* TAINT use read-only property */
-        this.up = null;
         this._path = null;
+        /* TAINT use read-only properties: */
+        this._inherit_names = new Set(['omit_name_from_path', 'path_separator']);
+        this._inherited = {
+          omit_name_from_path: (ref = fsmd.omit_name_from_path) != null ? ref : misfit,
+          path_separator: (ref1 = fsmd.path_separator) != null ? ref1 : misfit
+        };
+        this.path_separator = '/';
+        this.omit_name_from_path = false;
+        this.up = null;
         (() => {          //.......................................................................................................
-          var k, results;
-          results = [];
+          var k;
+/* TAINT should definitely simplify logic, maybe use FSM as protoype for sub-FSM? */
           for (k in this) {
-            results.push(this._reserved_keys.add(k));
+            if (this._inherit_names.has(k)) {
+              continue;
+            }
+            this._reserved_keys.add(k);
           }
-          return results;
+          return null;
         })();
         //.......................................................................................................
         this._compile_fail();
@@ -244,6 +255,7 @@
         this._compile_cascades();
         // @_compile_root_fsms()
         this._copy_other_attributes();
+        this._copy_inherited_attributes();
         delete this._tmp;
         return null;
       }
@@ -696,6 +708,40 @@
         return null;
       }
 
+      //---------------------------------------------------------------------------------------------------------
+      * _walk_fsms(transitive = false) {
+        var fsm, fsm_name, i, len, ref;
+        ref = this.fsm_names;
+        for (i = 0, len = ref.length; i < len; i++) {
+          fsm_name = ref[i];
+          fsm = this[fsm_name];
+          yield fsm;
+          if (transitive) {
+            yield* fsm._walk_fsms(transitive);
+          }
+        }
+        return null;
+      }
+
+      //---------------------------------------------------------------------------------------------------------
+      _copy_inherited_attributes() {
+        var fsm, pname, ref, ref1;
+        if (this.up !== null/* only run for root fsm */) {
+          return;
+        }
+        ref = this._walk_fsms(true);
+        for (fsm of ref) {
+          ref1 = this._inherit_names;
+          for (pname of ref1) {
+            if (fsm._inherited[pname] !== misfit) {
+              continue;
+            }
+            fsm[pname] = this[pname];
+          }
+        }
+        return null;
+      }
+
     };
 
     //---------------------------------------------------------------------------------------------------------
@@ -810,14 +856,7 @@
       //-------------------------------------------------------------------------------------------------------
       fsms: {
         get: function() {
-          var i, len, ref, results, subfsm_name;
-          ref = this.fsm_names;
-          results = [];
-          for (i = 0, len = ref.length; i < len; i++) {
-            subfsm_name = ref[i];
-            results.push(this[subfsm_name]);
-          }
-          return results;
+          return [...this._walk_fsms()];
         }
       },
       //-------------------------------------------------------------------------------------------------------
@@ -836,7 +875,13 @@
           if ((R = this._path) != null) {
             return R;
           }
-          return this._path = this.up != null ? `${this.up.path}/${this.name}` : (ref = this.name) != null ? ref : null;
+          if (this.up == null) {
+            return this._path = (ref = this.name) != null ? ref : 'FSM';
+          }
+          if ((this.up.up == null) && this.omit_name_from_path) {
+            return this._path = this.name;
+          }
+          return this._path = `${this.up.path}${this.path_separator}${this.name}`;
         }
       },
       //-------------------------------------------------------------------------------------------------------
