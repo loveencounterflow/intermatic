@@ -391,15 +391,18 @@
       }
 
       //---------------------------------------------------------------------------------------------------------
-      _call_actions(stage, verb_or_lstate, P) {
+      _call_actions(target, stage, verb_or_lstate, ...P) {
         var i, len, ref, transitioner, transitioners;
-        this._stage = stage;
-        if ((transitioners = (ref = this[stage]) != null ? ref[verb_or_lstate] : void 0) == null) {
+        if (target == null) {
           return null;
         }
+        if ((transitioners = (ref = target[stage]) != null ? ref[verb_or_lstate] : void 0) == null) {
+          return null;
+        }
+        target._stage = stage;
         for (i = 0, len = transitioners.length; i < len; i++) {
           transitioner = transitioners[i];
-          transitioner.apply(this, P);
+          transitioner.apply(target, P);
         }
         return null;
       }
@@ -439,29 +442,29 @@
           while (true) {
             // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
             //.....................................................................................................
-            this._call_actions('before', 'any', P);
+            this._call_actions(this, 'before', 'any', ...P);
             if (this._cancelled) {
               break;
             }
             if (changed) {
-              this._call_actions('before', 'change', P);
+              this._call_actions(this, 'before', 'change', ...P);
             }
             if (this._cancelled) {
               break;
             }
-            this._call_actions('before', verb, P);
+            this._call_actions(this, 'before', verb, ...P);
             if (this._cancelled) {
               break;
             }
             if (changed) {
               // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-              this._call_actions('leaving', 'any', P);
+              this._call_actions(this, 'leaving', 'any', ...P);
             }
             if (this._cancelled) {
               break;
             }
             if (changed) {
-              this._call_actions('leaving', dpar, P);
+              this._call_actions(this, 'leaving', dpar, ...P);
             }
             if (this._cancelled) {
               break;
@@ -472,42 +475,48 @@
             }
             if (!changed) {
               //...................................................................................................
-              this._call_actions('keeping', 'any', P);
+              this._call_actions(this, 'keeping', 'any', ...P);
             }
             if (this._cancelled) {
               break;
             }
             if (!changed) {
-              this._call_actions('keeping', dpar, P);
+              this._call_actions(this, 'keeping', dpar, ...P);
             }
             if (this._cancelled) {
               break;
             }
             if (changed) {
               // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-              this._call_actions('entering', 'any', P);
+              this._call_actions(this, 'entering', 'any', ...P);
             }
             if (this._cancelled) {
               break;
             }
             if (changed) {
-              this._call_actions('entering', dest, P);
+              this._call_actions(this, 'entering', dest, ...P);
             }
             if (this._cancelled) {
               break;
             }
             // . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .
-            this._call_actions('after', 'any', P);
+            this._call_actions(this, 'after', 'any', ...P);
             if (this._cancelled) {
               break;
             }
             if (changed) {
-              this._call_actions('after', 'change', P);
+              this._call_actions(this, 'after', 'change', ...P);
             }
             if (this._cancelled) {
               break;
             }
-            this._call_actions('after', verb, P);
+            this._call_actions(this, 'after', verb, ...P);
+            if (this._cancelled) {
+              break;
+            }
+            if (changed) {
+              this._call_actions(this.root_fsm, 'after', 'EXP_any_change', this, ...P);
+            }
             if (this._cancelled) {
               break;
             }
