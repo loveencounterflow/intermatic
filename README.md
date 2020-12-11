@@ -157,6 +157,12 @@ alpha_btn:
   called after any change in any (direct or indirect) sub-FSM; the first argument will be the sub-FSM whose
   state has changed; rest of arguments as with all other actions.
 
+* `path_separator` and `omit_name_from_path` may be set (*only at the root FSM* for the time being) to
+  control whether the value returned by `fsm.path` should include the root FSM's name as first element, and
+  waht string should be used to separate path components. Defaults are `omit_name_from_path: false` and
+  `path_separator: '_'`. Observe that the result of `root_fsm.path` will always be the root FSM's `name`,
+  regardless of the value of `omit_name_from_path`. (Currently, when one of these attributes is set on any
+  child FSM, the behavior of `fsm.path` is considered undefined.)
 
 * `fsm.history`
 
