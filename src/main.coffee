@@ -8,6 +8,7 @@ types                     = new ( require 'intertype' ).Intertype()
   isa
   declare }               = types.export()
 freeze                    = Object.freeze
+misfit                    = Symbol 'misfit'
 unless globalThis.debug?  then debug  = console.debug
 unless globalThis.rpr?    then rpr    = JSON.stringify
 
@@ -104,6 +105,7 @@ class Intermatic
     @has_subfsms        = false
     @_stage             = null
     @_lstate            = 'void'
+    @_root_fsm          = misfit
     @_reserved_keys     = new Set()
     @_trigger_stages    = freeze [ 'before', 'after', ]
     @_state_stages      = freeze [ 'entering', 'leaving', 'keeping', ]
@@ -118,6 +120,7 @@ class Intermatic
     @_nxt_dpar          = null
     @_nxt_dest          = null
     @_nxt_verb          = null
+    ### TAINT use read-only property ###
     @up                 = null
     @_path              = null
     #.......................................................................................................
@@ -136,6 +139,7 @@ class Intermatic
     @_compile_subfsms()
     # @_compile_data()
     @_compile_cascades()
+    # @_compile_root_fsms()
     @_copy_other_attributes()
     delete @_tmp
     return null
@@ -172,12 +176,12 @@ class Intermatic
         freeze target
         return freeze R
     #-------------------------------------------------------------------------------------------------------
-    stage:  get: -> @_stage
-    verb:   get: -> @_nxt_verb
-    dpar:   get: -> @_nxt_dpar
-    dest:   get: -> @_nxt_dest
+    stage:    get: -> @_stage
+    verb:     get: -> @_nxt_verb
+    dpar:     get: -> @_nxt_dpar
+    dest:     get: -> @_nxt_dest
     #-------------------------------------------------------------------------------------------------------
-    move:   get: ->
+    move: get: ->
       R         = {}
       R.stage   = x if ( x = @stage   )?
       R.verb    = x if ( x = @verb    )?
@@ -199,6 +203,12 @@ class Intermatic
       get: ->
         return R if ( R = @_path )?
         return @_path = if @up? then "#{@up.path}/#{@name}" else @name ? null
+    #-------------------------------------------------------------------------------------------------------
+    root_fsm:
+      get: ->
+        return R if ( R = @_root_fsm ) isnt misfit
+        return @_root_fsm = null if @up is null
+        return @_root_fsm = if ( root_fsm = @up.root_fsm )? then root_fsm else @up
     #-------------------------------------------------------------------------------------------------------
     history:
       get: ->
@@ -439,6 +449,14 @@ class Intermatic
     return null unless ( cascades = @_tmp.fsmd.cascades )?
     @cascades = new Set cascades
     return null
+
+  # #---------------------------------------------------------------------------------------------------------
+  # _compile_root_fsms: ->
+  #   @_tmp.known_names.add 'root_fsm'
+  #   debug '^3344^', @up?.name ? 'NULL'
+  #   return unless ( @_root_fsm = @up )?
+  #   @_root_fsm = root_fsm while ( root_fsm = root_fsm.up )?
+  #   return null
 
   #---------------------------------------------------------------------------------------------------------
   _copy_other_attributes: ->
