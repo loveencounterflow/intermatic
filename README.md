@@ -131,7 +131,7 @@ alpha_btn:
 * A **trajectory** is a (possibly empty) list of local states. It must satisfy a number of constraints:
   * A trajectory list must have either no elements or more than one element.
   * The elements in a trajectory list are interpreted in a pair-wise fashion such that the `i`th element
-    becomes the departure and the `i + 1`th element the destination of an **elemntary trajectory** a.k.a. a
+    becomes the departure and the `i + 1`th element the destination of an **elementary trajectory** a.k.a. a
     **transition**. For example, the trajectory `[ 'a', 'b', 'c', ]` contains the transitions from departure
     `a` to destination `b`, and the transition from `b` to `c`.
   * It is not allowed to repeat any element of a trajectory except for the case of circular trajectory
@@ -153,9 +153,9 @@ alpha_btn:
 
 * Root FSM (the uppermost object reachable through recursively retrieving the `up` attribute) is available
   as attribute `root_fsm`; the value of `fsm.root_fsm.root_fsm` is always `null`.
-* Experimental poor man's event bubbling: if the root FSM has a method `EXP_any_change()`, it will be called
-  after any change in any (direct or indirect) sub-FSM; the first argument will be the sub-FSM whose state
-  has changed; rest of arguments as with all other actions.
+* Experimental poor man's event bubbling: if the root FSM has a method `after.EXP_any_change()`, it will be
+  called after any change in any (direct or indirect) sub-FSM; the first argument will be the sub-FSM whose
+  state has changed; rest of arguments as with all other actions.
 
 
 * `fsm.history`
