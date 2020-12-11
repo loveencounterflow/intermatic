@@ -93,39 +93,49 @@ class Intermatic
   #---------------------------------------------------------------------------------------------------------
   constructor: ( fsmd ) ->
     # validate.fsmd fsmd
-    # @_types             = types
-    @_tmp               = {}
-    @_tmp.fsmd          = { fsmd..., }
-    @_tmp.known_names   = new Set()
-    # @_mnames            = new Set()
-    @moves              = null
-    @cascades           = null
-    @lstates            = null
-    @fsm_names          = []
-    @has_subfsms        = false
-    @_stage             = null
-    @_lstate            = 'void'
-    @_root_fsm          = misfit
-    @_reserved_keys     = new Set()
-    @_trigger_stages    = freeze [ 'before', 'after', ]
-    @_state_stages      = freeze [ 'entering', 'leaving', 'keeping', ]
+    # @_types               = types
+    @_tmp                 = {}
+    @_tmp.fsmd            = { fsmd..., }
+    @_tmp.known_names     = new Set()
+    # @_mnames              = new Set()
+    @moves                = null
+    @cascades             = null
+    @lstates              = null
+    @fsm_names            = []
+    @has_subfsms          = false
+    @_stage               = null
+    @_lstate              = 'void'
+    @_root_fsm            = misfit
+    @_reserved_keys       = new Set()
+    @_trigger_stages      = freeze [ 'before', 'after', ]
+    @_state_stages        = freeze [ 'entering', 'leaving', 'keeping', ]
     do =>
       for stages in [ @_trigger_stages, @_state_stages, ]
         set @, stage, {} for stage in stages
-    @data               = null
-    @history_length     = 1
-    @_cancelled         = null
-    @_prv_lstates       = [ @_lstate, ]
-    @_prv_verbs         = []
-    @_nxt_dpar          = null
-    @_nxt_dest          = null
-    @_nxt_verb          = null
-    ### TAINT use read-only property ###
-    @up                 = null
-    @_path              = null
+    @data                 = null
+    @history_length       = 1
+    @_cancelled           = null
+    @_prv_lstates         = [ @_lstate, ]
+    @_prv_verbs           = []
+    @_nxt_dpar            = null
+    @_nxt_dest            = null
+    @_nxt_verb            = null
+    @_path                = null
+    ### TAINT use read-only properties: ###
+    @_inherit_names       = new Set [ 'omit_name_from_path', 'path_separator', ]
+    @_inherited           =
+      omit_name_from_path:  fsmd.omit_name_from_path  ? misfit
+      path_separator:       fsmd.path_separator       ? misfit
+    @path_separator       = '/'
+    @omit_name_from_path  = false
+    @up                   = null
     #.......................................................................................................
     do =>
-      @_reserved_keys.add k for k of @
+      ### TAINT should definitely simplify logic, maybe use FSM as protoype for sub-FSM? ###
+      for k of @
+        continue if @_inherit_names.has k
+        @_reserved_keys.add k
+      return null
     #.......................................................................................................
     @_compile_fail()
     # @_compile_cyclers()
@@ -141,6 +151,7 @@ class Intermatic
     @_compile_cascades()
     # @_compile_root_fsms()
     @_copy_other_attributes()
+    @_copy_inherited_attributes()
     delete @_tmp
     return null
 
@@ -192,7 +203,7 @@ class Intermatic
       R.failed  = true if ( @dpar? and not @dest? )
       return freeze R
     #-------------------------------------------------------------------------------------------------------
-    fsms: get: -> ( @[ subfsm_name ] for subfsm_name in @fsm_names )
+    fsms: get: -> [ @_walk_fsms()..., ]
     #-------------------------------------------------------------------------------------------------------
     changed:
       get: ->
@@ -201,8 +212,10 @@ class Intermatic
     #-------------------------------------------------------------------------------------------------------
     path:
       get: ->
-        return R if ( R = @_path )?
-        return @_path = if @up? then "#{@up.path}/#{@name}" else @name ? null
+        return R                                                if ( R = @_path )?
+        return @_path = @name ? 'FSM'                           if not @up?
+        return @_path = @name                                   if ( not @up.up? ) and @omit_name_from_path
+        return @_path = "#{@up.path}#{@path_separator}#{@name}"
     #-------------------------------------------------------------------------------------------------------
     root_fsm:
       get: ->
@@ -468,6 +481,23 @@ class Intermatic
       # if ( pname is 'data' ) and ( isa.object propd.value ) and ( not propd.value.up? )
       #   Object.defineProperty propd.value, 'fsm', { enumerable: false, value: @, }
       Object.defineProperty @, pname, propd
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _walk_fsms: ( transitive = false ) ->
+    for fsm_name in @fsm_names
+      fsm = @[ fsm_name ]
+      yield fsm
+      yield from fsm._walk_fsms transitive if transitive
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _copy_inherited_attributes: ->
+    return unless @up is null ### only run for root fsm ###
+    for fsm from @_walk_fsms true
+      for pname from @_inherit_names
+        continue if fsm._inherited[ pname ] isnt misfit
+        fsm[ pname ] = @[ pname ]
     return null
 
 
