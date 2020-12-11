@@ -151,6 +151,13 @@ alpha_btn:
 
 * Verbs mentioned in the **fsmd.cascades** attributes will be called on all sub-FSMs.
 
+* Root FSM (the uppermost object reachable through recursively retrieving the `up` attribute) is available
+  as attribute `root_fsm`; the value of `fsm.root_fsm.root_fsm` is always `null`.
+* Experimental poor man's event bubbling: if the root FSM has a method `EXP_any_change()`, it will be called
+  after any change in any (direct or indirect) sub-FSM; the first argument will be the sub-FSM whose state
+  has changed; rest of arguments as with all other actions.
+
+
 * `fsm.history`
 
 * Multiple terminal states are not a problem.
