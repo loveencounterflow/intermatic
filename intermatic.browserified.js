@@ -18,7 +18,7 @@
 },{"./main.js":2}],2:[function(require,module,exports){
 (function() {
   'use strict';
-  var Intermatic, debug, declare, freeze, isa, push_circular, rpr, set, types, validate;
+  var Intermatic, debug, declare, freeze, isa, misfit, push_circular, rpr, set, types, validate;
 
   //###########################################################################################################
   types = new (require('intertype')).Intertype();
@@ -26,6 +26,8 @@
   ({validate, isa, declare} = types.export());
 
   freeze = Object.freeze;
+
+  misfit = Symbol('misfit');
 
   if (globalThis.debug == null) {
     debug = console.debug;
@@ -186,6 +188,7 @@
         this.has_subfsms = false;
         this._stage = null;
         this._lstate = 'void';
+        this._root_fsm = misfit;
         this._reserved_keys = new Set();
         this._trigger_stages = freeze(['before', 'after']);
         this._state_stages = freeze(['entering', 'leaving', 'keeping']);
@@ -215,6 +218,7 @@
         this._nxt_dpar = null;
         this._nxt_dest = null;
         this._nxt_verb = null;
+        /* TAINT use read-only property */
         this.up = null;
         this._path = null;
         (() => {          //.......................................................................................................
@@ -238,6 +242,7 @@
         this._compile_subfsms();
         // @_compile_data()
         this._compile_cascades();
+        // @_compile_root_fsms()
         this._copy_other_attributes();
         delete this._tmp;
         return null;
@@ -657,7 +662,15 @@
         return null;
       }
 
-      //---------------------------------------------------------------------------------------------------------
+      // #---------------------------------------------------------------------------------------------------------
+      // _compile_root_fsms: ->
+      //   @_tmp.known_names.add 'root_fsm'
+      //   debug '^3344^', @up?.name ? 'NULL'
+      //   return unless ( @_root_fsm = @up )?
+      //   @_root_fsm = root_fsm while ( root_fsm = root_fsm.up )?
+      //   return null
+
+        //---------------------------------------------------------------------------------------------------------
       _copy_other_attributes() {
         var pname, propd, ref;
         ref = Object.getOwnPropertyDescriptors(this._tmp.fsmd);
@@ -815,6 +828,19 @@
             return R;
           }
           return this._path = this.up != null ? `${this.up.path}/${this.name}` : (ref = this.name) != null ? ref : null;
+        }
+      },
+      //-------------------------------------------------------------------------------------------------------
+      root_fsm: {
+        get: function() {
+          var R, root_fsm;
+          if ((R = this._root_fsm) !== misfit) {
+            return R;
+          }
+          if (this.up === null) {
+            return this._root_fsm = null;
+          }
+          return this._root_fsm = (root_fsm = this.up.root_fsm) != null ? root_fsm : this.up;
         }
       },
       //-------------------------------------------------------------------------------------------------------
