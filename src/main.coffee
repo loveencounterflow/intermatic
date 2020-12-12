@@ -97,7 +97,7 @@ class Intermatic
     @_tmp                 = {}
     @_tmp.fsmd            = { fsmd..., }
     @_tmp.known_names     = new Set()
-    # @_mnames              = new Set()
+    @name                 = @_tmp.fsmd.name ? 'FSM'
     @moves                = null
     @cascades             = null
     @lstates              = null
@@ -122,18 +122,13 @@ class Intermatic
     @_nxt_verb            = null
     @_path                = null
     ### TAINT use read-only properties: ###
-    @_inherit_names       = new Set [ 'omit_name_from_path', 'path_separator', ]
-    @_inherited           =
-      omit_name_from_path:  fsmd.omit_name_from_path  ? misfit
-      path_separator:       fsmd.path_separator       ? misfit
-    @path_separator       = '/'
-    @omit_name_from_path  = false
+    @_omit_root_name      = false
+    @_path_separator      = '/'
     @up                   = null
     #.......................................................................................................
     do =>
       ### TAINT should definitely simplify logic, maybe use FSM as protoype for sub-FSM? ###
       for k of @
-        continue if @_inherit_names.has k
         @_reserved_keys.add k
       return null
     #.......................................................................................................
@@ -149,9 +144,9 @@ class Intermatic
     @_compile_subfsms()
     # @_compile_data()
     @_compile_cascades()
-    # @_compile_root_fsms()
+    @_compile_omit_root_name()
+    @_compile_path_separator()
     @_copy_other_attributes()
-    @_copy_inherited_attributes()
     delete @_tmp
     return null
 
@@ -210,13 +205,18 @@ class Intermatic
         return null unless @_nxt_dpar? and @_nxt_dest?
         return @_nxt_dpar isnt @_nxt_dest
     #-------------------------------------------------------------------------------------------------------
+    omit_root_name: get: -> ( @root_fsm ? @ )._omit_root_name
+    path_separator: get: -> ( @root_fsm ? @ )._path_separator
+    breadcrumbs:
+      get: ->
+        if @is_root_fsm
+          return @_breadcrumbs = freeze if @omit_root_name then [] else [ @name, ]
+        return @_breadcrumbs = freeze [ @up.breadcrumbs..., @name, ]
     path:
       get: ->
-        return R                                                if ( R = @_path )?
-        return @_path = @name ? 'FSM'                           if not @up?
-        return @_path = @name                                   if ( not @up.up? ) and @omit_name_from_path
-        return @_path = "#{@up.path}#{@path_separator}#{@name}"
+        return @_path = if @is_root_fsm then @name else @breadcrumbs.join @path_separator
     #-------------------------------------------------------------------------------------------------------
+    is_root_fsm:  get: -> not @up?
     root_fsm:
       get: ->
         return R if ( R = @_root_fsm ) isnt misfit
@@ -465,13 +465,21 @@ class Intermatic
     @cascades = new Set cascades
     return null
 
-  # #---------------------------------------------------------------------------------------------------------
-  # _compile_root_fsms: ->
-  #   @_tmp.known_names.add 'root_fsm'
-  #   debug '^3344^', @up?.name ? 'NULL'
-  #   return unless ( @_root_fsm = @up )?
-  #   @_root_fsm = root_fsm while ( root_fsm = root_fsm.up )?
-  #   return null
+  #---------------------------------------------------------------------------------------------------------
+  _compile_omit_root_name: ->
+    return null unless ( omit_root_name = @_tmp.fsmd.omit_root_name )?
+    unless @is_root_fsm
+      throw new Error "^intermatic@654^ can only set 'omit_root_name' in root FSM (offending FSM: #{@path})"
+    @_omit_root_name = omit_root_name
+    return null
+
+  #---------------------------------------------------------------------------------------------------------
+  _compile_path_separator: ->
+    return null unless ( path_separator = @_tmp.fsmd.path_separator )?
+    unless @is_root_fsm
+      throw new Error "^intermatic@655^ can only set 'path_separator' in root FSM (offending FSM: #{@path})"
+    @_path_separator = path_separator
+    return null
 
   #---------------------------------------------------------------------------------------------------------
   _copy_other_attributes: ->
@@ -489,15 +497,6 @@ class Intermatic
       fsm = @[ fsm_name ]
       yield fsm
       yield from fsm._walk_fsms transitive if transitive
-    return null
-
-  #---------------------------------------------------------------------------------------------------------
-  _copy_inherited_attributes: ->
-    return unless @up is null ### only run for root fsm ###
-    for fsm from @_walk_fsms true
-      for pname from @_inherit_names
-        continue if fsm._inherited[ pname ] isnt misfit
-        fsm[ pname ] = @[ pname ]
     return null
 
 
