@@ -157,12 +157,19 @@ alpha_btn:
   called after any change in any (direct or indirect) sub-FSM; the first argument will be the sub-FSM whose
   state has changed; rest of arguments as with all other actions.
 
-* `path_separator` and `omit_name_from_path` may be set (*only at the root FSM* for the time being) to
+* `path_separator` and `omit_root_name` may be set (*only at the root FSM* for the time being) to
   control whether the value returned by `fsm.path` should include the root FSM's name as first element, and
-  waht string should be used to separate path components. Defaults are `omit_name_from_path: false` and
+  waht string should be used to separate path components. Defaults are `omit_root_name: false` and
   `path_separator: '/'`. Observe that the result of `root_fsm.path` will always be the root FSM's `name`,
-  regardless of the value of `omit_name_from_path`. (Currently, when one of these attributes is set on any
+  regardless of the value of `omit_root_name`. (Currently, when one of these attributes is set on any
   child FSM, the behavior of `fsm.path` is considered undefined.)
+* `fsm.breadcrumbs` returns a list with the path elements that are also seen in `fsm.path`. Observe though
+  that in case `fsm.omit_root_name` is set, the path for the root FSM will still be its name, but its
+  breadcrumbs property will be an empty list.
+  * This is in keeping with the intended use case for these properties: configure and use `path` to obtain a
+    suitable and readable unique ID for (the vents coming from) each FSM; use breadcrumbs or a derivative of
+    it to show 'how to get there', optionally omitting the root object which may be seen as a technical
+    necessity, as the case may be.
 
 * `fsm.history`
 
@@ -395,6 +402,7 @@ fsmd =
 
 * [ ] make `fsm.history` return list of `@move` objects, do not construct new data type
 * [ ] remove `index.*` as those files are no longer needed
+* [ ] make all computed properties enumerable (use decorator/factory)
 
 <!--
 * [ ] consider using more flexible, clearer(?) syntax where triggers may be grouped as seen fit, ex.:
