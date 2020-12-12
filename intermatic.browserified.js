@@ -175,13 +175,13 @@
     class Intermatic {
       //---------------------------------------------------------------------------------------------------------
       constructor(fsmd) {
-        var ref, ref1;
+        var ref;
         // validate.fsmd fsmd
         // @_types               = types
         this._tmp = {};
         this._tmp.fsmd = {...fsmd};
         this._tmp.known_names = new Set();
-        // @_mnames              = new Set()
+        this.name = (ref = this._tmp.fsmd.name) != null ? ref : 'FSM';
         this.moves = null;
         this.cascades = null;
         this.lstates = null;
@@ -194,11 +194,11 @@
         this._trigger_stages = freeze(['before', 'after']);
         this._state_stages = freeze(['entering', 'leaving', 'keeping']);
         (() => {
-          var i, len, ref, results, stage, stages;
-          ref = [this._trigger_stages, this._state_stages];
+          var i, len, ref1, results, stage, stages;
+          ref1 = [this._trigger_stages, this._state_stages];
           results = [];
-          for (i = 0, len = ref.length; i < len; i++) {
-            stages = ref[i];
+          for (i = 0, len = ref1.length; i < len; i++) {
+            stages = ref1[i];
             results.push((function() {
               var j, len1, results1;
               results1 = [];
@@ -221,21 +221,13 @@
         this._nxt_verb = null;
         this._path = null;
         /* TAINT use read-only properties: */
-        this._inherit_names = new Set(['omit_name_from_path', 'path_separator']);
-        this._inherited = {
-          omit_name_from_path: (ref = fsmd.omit_name_from_path) != null ? ref : misfit,
-          path_separator: (ref1 = fsmd.path_separator) != null ? ref1 : misfit
-        };
-        this.path_separator = '/';
-        this.omit_name_from_path = false;
+        this._omit_root_name = false;
+        this._path_separator = '/';
         this.up = null;
         (() => {          //.......................................................................................................
           var k;
 /* TAINT should definitely simplify logic, maybe use FSM as protoype for sub-FSM? */
           for (k in this) {
-            if (this._inherit_names.has(k)) {
-              continue;
-            }
             this._reserved_keys.add(k);
           }
           return null;
@@ -253,9 +245,9 @@
         this._compile_subfsms();
         // @_compile_data()
         this._compile_cascades();
-        // @_compile_root_fsms()
+        this._compile_omit_root_name();
+        this._compile_path_separator();
         this._copy_other_attributes();
-        this._copy_inherited_attributes();
         delete this._tmp;
         return null;
       }
@@ -683,15 +675,33 @@
         return null;
       }
 
-      // #---------------------------------------------------------------------------------------------------------
-      // _compile_root_fsms: ->
-      //   @_tmp.known_names.add 'root_fsm'
-      //   debug '^3344^', @up?.name ? 'NULL'
-      //   return unless ( @_root_fsm = @up )?
-      //   @_root_fsm = root_fsm while ( root_fsm = root_fsm.up )?
-      //   return null
+      //---------------------------------------------------------------------------------------------------------
+      _compile_omit_root_name() {
+        var omit_root_name;
+        if ((omit_root_name = this._tmp.fsmd.omit_root_name) == null) {
+          return null;
+        }
+        if (!this.is_root_fsm) {
+          throw new Error(`^intermatic@654^ can only set 'omit_root_name' in root FSM (offending FSM: ${this.path})`);
+        }
+        this._omit_root_name = omit_root_name;
+        return null;
+      }
 
-        //---------------------------------------------------------------------------------------------------------
+      //---------------------------------------------------------------------------------------------------------
+      _compile_path_separator() {
+        var path_separator;
+        if ((path_separator = this._tmp.fsmd.path_separator) == null) {
+          return null;
+        }
+        if (!this.is_root_fsm) {
+          throw new Error(`^intermatic@655^ can only set 'path_separator' in root FSM (offending FSM: ${this.path})`);
+        }
+        this._path_separator = path_separator;
+        return null;
+      }
+
+      //---------------------------------------------------------------------------------------------------------
       _copy_other_attributes() {
         var pname, propd, ref;
         ref = Object.getOwnPropertyDescriptors(this._tmp.fsmd);
@@ -718,25 +728,6 @@
           yield fsm;
           if (transitive) {
             yield* fsm._walk_fsms(transitive);
-          }
-        }
-        return null;
-      }
-
-      //---------------------------------------------------------------------------------------------------------
-      _copy_inherited_attributes() {
-        var fsm, pname, ref, ref1;
-        if (this.up !== null/* only run for root fsm */) {
-          return;
-        }
-        ref = this._walk_fsms(true);
-        for (fsm of ref) {
-          ref1 = this._inherit_names;
-          for (pname of ref1) {
-            if (fsm._inherited[pname] !== misfit) {
-              continue;
-            }
-            fsm[pname] = this[pname];
           }
         }
         return null;
@@ -869,22 +860,37 @@
         }
       },
       //-------------------------------------------------------------------------------------------------------
+      omit_root_name: {
+        get: function() {
+          var ref;
+          return ((ref = this.root_fsm) != null ? ref : this)._omit_root_name;
+        }
+      },
+      path_separator: {
+        get: function() {
+          var ref;
+          return ((ref = this.root_fsm) != null ? ref : this)._path_separator;
+        }
+      },
+      breadcrumbs: {
+        get: function() {
+          if (this.is_root_fsm) {
+            return this._breadcrumbs = freeze(this.omit_root_name ? [] : [this.name]);
+          }
+          return this._breadcrumbs = freeze([...this.up.breadcrumbs, this.name]);
+        }
+      },
       path: {
         get: function() {
-          var R, ref;
-          if ((R = this._path) != null) {
-            return R;
-          }
-          if (this.up == null) {
-            return this._path = (ref = this.name) != null ? ref : 'FSM';
-          }
-          if ((this.up.up == null) && this.omit_name_from_path) {
-            return this._path = this.name;
-          }
-          return this._path = `${this.up.path}${this.path_separator}${this.name}`;
+          return this._path = this.is_root_fsm ? this.name : this.breadcrumbs.join(this.path_separator);
         }
       },
       //-------------------------------------------------------------------------------------------------------
+      is_root_fsm: {
+        get: function() {
+          return this.up == null;
+        }
+      },
       root_fsm: {
         get: function() {
           var R, root_fsm;
