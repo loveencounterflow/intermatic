@@ -3,7 +3,7 @@
 
 
 ############################################################################################################
-types                     = new ( require 'intertype' ).Intertype()
+types = new ( require 'intertype' ).Intertype()
 { validate
   isa
   declare }               = types.export()
