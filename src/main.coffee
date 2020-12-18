@@ -85,7 +85,7 @@ push_circular = ( xs, x, max_length = 1 ) ->
 #===========================================================================================================
 #
 #-----------------------------------------------------------------------------------------------------------
-class Intermatic
+class @Intermatic
 
   #---------------------------------------------------------------------------------------------------------
   @_tid: 0
@@ -499,11 +499,6 @@ class Intermatic
       yield from fsm._walk_fsms transitive if transitive
     return null
 
-
-############################################################################################################
-module.exports = Intermatic
-# if globalThis.require? then module.exports        = { Intermatic, }
-# else                        globalThis.Intermatic = Intermatic
 
 
 
