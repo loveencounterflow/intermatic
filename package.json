@@ -2,7 +2,7 @@
   "name": "intermatic",
   "version": "0.5.1",
   "description": "state machine for NodeJS and the browser",
-  "main": "lib/index.js",
+  "main": "lib/main.js",
   "scripts": {
     "test": "echo \"see https://github.com/loveencounterflow/hengist/dev/intermatic\""
   },
