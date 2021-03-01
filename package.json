@@ -23,6 +23,6 @@
   },
   "homepage": "https://github.com/loveencounterflow/intermatic#readme",
   "dependencies": {
-    "intertype": "^7.6.2"
+    "intertype": "7.6.5"
   }
 }
