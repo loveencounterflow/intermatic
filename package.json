@@ -1,6 +1,6 @@
 {
   "name": "intermatic",
-  "version": "0.5.3",
+  "version": "0.5.4",
   "description": "state machine for NodeJS and the browser",
   "main": "lib/main.js",
   "scripts": {
