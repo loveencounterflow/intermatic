@@ -403,6 +403,7 @@ fsmd =
 * [ ] make `fsm.history` return list of `@move` objects, do not construct new data type
 * [ ] remove `index.*` as those files are no longer needed
 * [ ] make all computed properties enumerable (use decorator/factory)
+* [ ] terminology/prefabs: 'pushtoggle' (a momentary switch that toggles between a number of states)
 
 <!--
 * [ ] consider using more flexible, clearer(?) syntax where triggers may be grouped as seen fit, ex.:
