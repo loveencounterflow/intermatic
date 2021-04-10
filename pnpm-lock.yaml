@@ -1,16 +1,16 @@
 dependencies:
-  intertype: 7.6.5
+  intertype: 7.6.7
 lockfileVersion: 5.2
 packages:
-  /intertype/7.6.5:
+  /intertype/7.6.7:
     dependencies:
       multimix: 5.0.0
     dev: false
     resolution:
-      integrity: sha512-763YK3ezLYy9FkX+cTTg/qwGHteqlaTMiec9a2sVAKm7kXp9e7QkzbyYS6u4CcbLxx12L8bcRbe3SFsPeaJCMA==
+      integrity: sha512-vBgYabqxX3fLa9f0Z3QeXgYszadAGdAHXdLcdQc5ZxZSG5CmbJCdYcudZLYtgmNo8epQag8zzyg7wwx+OD5J8g==
   /multimix/5.0.0:
     dev: false
     resolution:
       integrity: sha512-N9cdGSDDD7kxOV7R6e4iZqsHTZ4F4iiSDWqMcVqx4gEH6HBtRXav39Gj3fgT1YqvBcwPCQuf0Oa5R2cDaLWK8A==
 specifiers:
-  intertype: 7.6.5
+  intertype: 7.6.7
