@@ -9,8 +9,10 @@ types = new ( require 'intertype' ).Intertype()
   declare }               = types.export()
 freeze                    = Object.freeze
 misfit                    = Symbol 'misfit'
-unless globalThis.debug?  then debug  = console.debug
-unless globalThis.rpr?    then rpr    = JSON.stringify
+debug                     = globalThis.debug  ? console.debug
+rpr                       = globalThis.rpr    ? JSON.stringify
+# console.log '^e23984^', globalThis.rpr
+# console.log '^e23984^', rpr; process.exit 2
 
 #===========================================================================================================
 # TYPES
