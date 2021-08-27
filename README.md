@@ -67,9 +67,53 @@ alpha_btn:
 
 * The fields of an FSMD are:
 
+  * **`before`** ⮕
+    * **`any`** ⮕
+    * **`change`** ⮕
+    * **`[lstate]`** ⮕
+
+  * **`after`** ⮕
+    * **`any`** ⮕
+    * **`change`** ⮕
+    * **`[lstate]`** ⮕
+
+  * **`entering`** ⮕
+    * **`any`** ⮕
+    * **`change`** ⮕
+    * **`[lstate]`** ⮕
+
+  * **`leaving`** ⮕
+    * **`any`** ⮕
+    * **`change`** ⮕
+    * **`[lstate]`** ⮕
+
+  * **`keeping`** ⮕
+    * **`any`** ⮕
+    * **`change`** ⮕
+    * **`[lstate]`** ⮕
+
+
+  * **`fail`** ⮕
+
+  * **`moves`** ⮕
+  * **`start`** ⮕
+  * **`reset`** ⮕
+  * **`toggle`** ⮕
+  * **`goto`** ⮕
+  * **`can`** ⮕
+  * **`tryto`** ⮕
+  * **`enter`** ⮕
+  * **`leave`** ⮕
+  * **`cascades`** ⮕
+  * **`name`** ⮕
+
+
+  -----------------------------------------------------------------------------------------
+
+
   * Declaring triggers:
-    * `triggers`
-    * `cyclers` (Not Implemented)
+    * <del>`triggers`</del>
+    * <del>`cyclers` (Not Implemented)</del>
 
   * Lifecycle Attributes:
 
